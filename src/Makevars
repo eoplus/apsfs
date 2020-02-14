@@ -1,0 +1,6 @@
+GSL_CFLAGS = -I/usr/local/include
+GSL_LIBS   = -L/usr/local/lib -lgsl
+
+# combine to standard arguments for R
+PKG_CPPFLAGS =  $(GSL_CFLAGS) -I.
+PKG_LIBS = $(GSL_LIBS)
