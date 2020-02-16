@@ -13,17 +13,19 @@
 
 #' Calculates the Radial Zernike Polynomials up to a given radial order
 #'
-#' @param rho   Radius, [0, 1].
-#' @param phi   Azimuth, [0, 2pi].
-#' @param order Maximum radial order.
+#' @param rho    Radius, [0, 1].
+#' @param phi    Azimuth, [0, 2pi].
+#' @param thetav View angle, [0, pi/2].
+#' @param order  Maximum radial order.
 #'
 #' @useDynLib apsfs C_ozernike
 #' @export
 
-ozernike <- function(rho, phi, order = 6) {
+ozernike <- function(rho, phi, thetav, ord) {
 
-  res <- .Call("C_ozernike", rho, phi, as.integer(order))
-  matrix(unlist(res), nrow = length(rho))
+  spec <- .get_spec_comp(ord)
+  res  <- .Call("C_ozernike", rho, phi, thetav, spec)
+  res
 #  ncol <- (order + 1) * (order + 2) / 2
 #  orzp <- matrix(NA, ncol = ncol, nrow = length(rho))
 #  id <- 1
@@ -43,4 +45,19 @@ ozernike <- function(rho, phi, order = 6) {
 #  orzp
 }
 
+.get_spec_comp <- function(ord) {
+# ord is the maximum radial order
 
+  m <- NULL
+  for(i in 0:ord) {
+    for(j in 0:i) {
+      for(p in 0:j) {
+        if(((i - p) %% 2) == 0 & ((j - p) %% 2) == 0)
+          m <- rbind(m, c(i, j, p))
+      }
+    }
+  }
+
+  m
+
+}

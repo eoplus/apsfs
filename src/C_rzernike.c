@@ -2,6 +2,15 @@
 #include <R.h>
 #include <Rinternals.h>
 
+/* Zernike code adapted from the SCATMECH library, which implements the model 
+ * of:
+ * Koenderink, J. J.; van Doorn, A. J. 1998. Phenomenological description of 
+ * bidirectional surface reflection. J. Opt. Soc. Am. A 15, 11, 2903-2912. 
+ *
+ * SCATMECH availabe at: https://github.com/usnistgov/SCATMECH
+*/
+
+
 // Macro definitions:
 
 #define ABS(x) \
@@ -52,69 +61,66 @@ double factorial_list[171] =
     };
 
 double mpow(int m) {
-	int result;
-	if (m<0) m=-m;
-	if (m & 0x1) result = -1;
-	else result = 1;
-	return result;
+  int result;
+  if (m<0) m=-m;
+  if (m & 0x1) result = -1;
+  else result = 1;
+  return result;
 }
 
 double Fact(int j) {
-	if (j <= 170 && j>=0) return factorial_list[j];
-	else exit(-1);
+  if (j <= 170 && j>=0) return factorial_list[j];
+  else exit(-1);
 }
 
 double Radial_Zernike_Polynomial(int n, int l, double rho) {
-	int m = ABS(l);
-	if ((n-m)%2 == 1) return 0.;
-	double sum = 0;
-	for (int s = 0; s <= (n-m) / 2; ++s) {
-		sum += mpow(s)*Fact(n-s)/Fact(s)/Fact((n+m)/2-s)/Fact((n-m)/2-s)*pow(rho,(double)(n-2*s));		
-	}
-	return sum;
+  int m = ABS(l);
+  if ((n-m)%2 == 1) return 0.;
+  double sum = 0;
+  for (int s = 0; s <= (n-m) / 2; ++s) {
+    sum += mpow(s)*Fact(n-s)/Fact(s)/Fact((n+m)/2-s)/Fact((n-m)/2-s)*pow(rho,(double)(n-2*s));		
+  }
+  return sum;
 }
 
-SEXP C_pzernike(int n, int m, SEXP rho, SEXP phi) {
+SEXP ZernikeExpansion_BRDF_Model(SEXP spec, double rhoi, double phi, SEXP thetas) {
 
-  SEXP zp = Rf_protect(Rf_allocVector(REALSXP, Rf_xlength(rho)));
-  double* zpp = REAL(zp);
-  double* rhoi = REAL(rho);
-  double* phii = REAL(phi);
-  double (*trig)(double);
+  int n, m, l, nr;
+  double prefact;
+  SEXP brdf = Rf_protect(Rf_allocVector(REALSXP, Rf_nrows(spec)));
+  double rhor = sqrt(2.)*sin(Rf_asReal(thetas)/2.);
 
-  if(m < 0) {
-    trig = &sin;
-  } else {
-    trig = &cos;
-  }
-
-  m = ABS(m);
-  for(int i = 0; i < Rf_xlength(rho); i++) {
-    zpp[i] = Radial_Zernike_Polynomial(n, m, rhoi[i]) * (*trig)(m * phii[i]);
+  nr = Rf_nrows(spec);
+  for(int q = 0; q < nr; q++) {
+    n = INTEGER(spec)[q + nr*0];
+    m = INTEGER(spec)[q + nr*1];
+    l = INTEGER(spec)[q + nr*2];
+    prefact = 0.5 / M_PI * sqrt((n+1.)*(m+1.)/((n==0||(n==m&&l==0))?4.:((n==m||l==0)?2.:1.)));
+    REAL(brdf)[q] = 1 * prefact * (Radial_Zernike_Polynomial(n,l,rhoi)*Radial_Zernike_Polynomial(m,l,rhor) +
+        Radial_Zernike_Polynomial(m,l,rhoi)*Radial_Zernike_Polynomial(n,l,rhor)) * cos(l * phi);
   }
 
   Rf_unprotect(1);
-  return zp;
+  return brdf;
 }
 
+SEXP C_ozernike(SEXP rho, SEXP phi, SEXP thetas, SEXP spec) {
 
-SEXP C_ozernike(SEXP rho, SEXP phi, SEXP order) {
+  int i, j;
 
-  int ord   = Rf_asInteger(order);
-  int lnght = (ord + 1) * (ord + 2) / 2;
-  SEXP ozp = Rf_protect(Rf_allocVector(VECSXP, lnght));
+  SEXP vec = Rf_protect(Rf_allocVector(REALSXP, Rf_nrows(spec)));
+  SEXP res = Rf_protect(Rf_allocMatrix(REALSXP, Rf_nrows(spec), Rf_xlength(rho)));
 
-  int id = 0, n, m;
-  for(n = 0; n <= ord; n++) {
-    for(m = -n; m <= n; m++) {
-      if((n - ABS(m)) % 2 == 1) {
-
-      } else {
-       SET_VECTOR_ELT(ozp, id, C_pzernike(n, m, rho, phi));
-       id += 1;
-      }
+  int nc = Rf_xlength(rho);
+  int nr = Rf_nrows(spec);
+  for(i = 0; i < nc; i++) {
+    vec = ZernikeExpansion_BRDF_Model(spec, REAL(rho)[i], REAL(phi)[i], thetas);
+    for(j = 0; j < nr; j++) {
+      REAL(res)[j + i * nr] = REAL(vec)[j];
     }
   }
-  Rf_unprotect(1);
-  return ozp;
+
+  Rf_unprotect(2);
+  return res;
 }
+

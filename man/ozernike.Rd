@@ -4,12 +4,14 @@
 \alias{ozernike}
 \title{Calculates the Radial Zernike Polynomials up to a given radial order}
 \usage{
-ozernike(rho, phi, order = 6)
+ozernike(rho, phi, thetav, ord)
 }
 \arguments{
 \item{rho}{Radius, [0, 1].}
 
 \item{phi}{Azimuth, [0, 2pi].}
+
+\item{thetav}{View angle, [0, pi/2].}
 
 \item{order}{Maximum radial order.}
 }
