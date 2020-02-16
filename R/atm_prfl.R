@@ -108,7 +108,11 @@ get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z,
 #  tau_ray_z <- tau_ray * p / p0
 
   # Interpolate the Rayleigh optical depth:
-  tau_ray_z <- 10^approx(x = atm$Z, y = log10(tau_ray_z), xout = brk_z)$y
+  if(all(tau_ray_z == 0)) {
+    tau_ray_z <- rep(0, length(brk_z))
+  } else {
+    tau_ray_z <- 10^approx(x = atm$Z, y = log10(tau_ray_z), xout = brk_z)$y
+  }
 
   # Get average Rayleigh properties in each layer:
   b_ray_z <- diff(tau_ray_z) / abs(diff(brk_z))
