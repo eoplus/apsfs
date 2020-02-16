@@ -74,6 +74,7 @@ get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z,
   z     <- sort(atm$Z, decreasing = TRUE)
   brk_z <- rev(c(0, 10^seq(log10(0.01), log10(z[2]), length.out = nlayers - 1), 
     z[1]))
+  brk_z[2] <- z[2] # Avoid rounding errors... 
 
   # Integrate aerosol extinction from TOA to surface:
   c_aer_0 <- tau_aer / H_aer
