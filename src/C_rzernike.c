@@ -83,7 +83,119 @@ double Radial_Zernike_Polynomial(int n, int l, double rho) {
   return sum;
 }
 
-SEXP ZernikeExpansion_BRDF_Model(SEXP spec, double rhoi, double phi, SEXP thetas) {
+// Retrieve the Zernike polynomial at requested rho and phi and terms defined
+// in spec. The function caluclating the Zernikes is ZernikeExpansion_surface
+// controled by the function C_zrnk_s1
+
+SEXP ZernikeExpansion_S1(SEXP spec, double rhoi, double phi) {
+
+  int n, m, nr;
+  double prefact;
+  SEXP zrnk = Rf_protect(Rf_allocVector(REALSXP, Rf_nrows(spec)));
+
+  nr = Rf_nrows(spec);
+  for(int q = 0; q < nr; q++) {
+    n = INTEGER(spec)[q + nr * 0];
+    m = INTEGER(spec)[q + nr * 1];
+    prefact = sqrt((2 * (n + 1)) / (M_PI * (1+(m == 0)?1:0)));
+    if(m >= 0) {
+      REAL(zrnk)[q] = 1 * prefact * Radial_Zernike_Polynomial(n,m,rhoi) * cos(m * phi);
+    } else {
+      REAL(zrnk)[q] = 1 * prefact * Radial_Zernike_Polynomial(n,m,rhoi) * sin(m * phi);
+    }
+  }
+
+  Rf_unprotect(1);
+  return zrnk;
+}
+
+SEXP C_zrnk_s1(SEXP rho, SEXP phi, SEXP spec) {
+
+  int i, j;
+
+  SEXP vec = Rf_protect(Rf_allocVector(REALSXP, Rf_nrows(spec)));
+  SEXP res = Rf_protect(Rf_allocMatrix(REALSXP, Rf_nrows(spec), Rf_xlength(rho)));
+  int nc = Rf_xlength(rho);
+  int nr = Rf_nrows(spec);
+  for(i = 0; i < nc; i++) {
+    vec = ZernikeExpansion_S1(spec, REAL(rho)[i], REAL(phi)[i]);
+    for(j = 0; j < nr; j++) {
+      REAL(res)[j + i * nr] = REAL(vec)[j];
+    }
+  }
+
+  Rf_unprotect(2);
+  return res;
+
+}
+
+// Retrieve the Zernike polynomial for the product of the unit disk with itself,
+// at requested rho and phi and terms defined in spec. The radius of the second 
+// surface is calculated by projecting the unit view vector onto the disk. 
+// Since atmospheric scatteirng is isotropic (not dependent on azimuth) the 
+// azimuthal dependency is specified completly by phi only. The function 
+// calculating the Zernikes is ZernikeExpansion_S2 controled by the function 
+// C_zrnk_s2
+
+SEXP ZernikeExpansion_S2(SEXP spec, double rhoi, double phi, SEXP thetas) {
+
+  int n, m, l, nr;
+  double prefact;
+  SEXP zrnk = Rf_protect(Rf_allocVector(REALSXP, Rf_nrows(spec)));
+  double rhor = sqrt(2.)*sin(Rf_asReal(thetas)/2.);
+
+  nr = Rf_nrows(spec);
+  for(int q = 0; q < nr; q++) {
+    n = INTEGER(spec)[q + nr*0];
+    m = INTEGER(spec)[q + nr*1];
+    l = INTEGER(spec)[q + nr*2];
+    prefact = sqrt((2 * (n + 1)) / (M_PI * (1+(l == 0)?1:0))) * 
+              sqrt((2 * (m + 1)) / (M_PI * (1+(l == 0)?1:0)));
+    if(l >= 0) {
+      REAL(zrnk)[q] = 1 * prefact * Radial_Zernike_Polynomial(n,l,rhoi) * 
+                      Radial_Zernike_Polynomial(m,l,rhor) * cos(l * phi) * 
+                      cos(l * phi);
+    } else {
+      REAL(zrnk)[q] = 1 * prefact * Radial_Zernike_Polynomial(n,l,rhoi) * 
+                      Radial_Zernike_Polynomial(m,l,rhor) * sin(l * phi) * 
+                      sin(l * phi);
+    }
+  }
+
+  Rf_unprotect(1);
+  return zrnk;
+}
+
+SEXP C_zrnk_s2(SEXP rho, SEXP phi, SEXP thetas, SEXP spec) {
+
+  int i, j;
+
+  SEXP vec = Rf_protect(Rf_allocVector(REALSXP, Rf_nrows(spec)));
+  SEXP res = Rf_protect(Rf_allocMatrix(REALSXP, Rf_nrows(spec), Rf_xlength(rho)));
+
+  int nc = Rf_xlength(rho);
+  int nr = Rf_nrows(spec);
+  for(i = 0; i < nc; i++) {
+    vec = ZernikeExpansion_S2(spec, REAL(rho)[i], REAL(phi)[i], thetas);
+    for(j = 0; j < nr; j++) {
+      REAL(res)[j + i * nr] = REAL(vec)[j];
+    }
+  }
+
+  Rf_unprotect(2);
+  return res;
+}
+
+// Retrieve the Zernike polynomial for the product of the unit disk with itself,
+// but retaining Helmholtz symetry (BRDF). Fuction is evaluated at requested rho 
+// and phi and terms defined in spec. The radius of the second 
+// surface is calculated by projecting the unit view vector onto the disk. 
+// Since atmospheric scatteirng is isotropic (not dependent on azimuth) the 
+// azimuthal dependency is specified completly by phi only. The function 
+// calculating the Zernikes is ZernikeExpansion_H2 controled by the function 
+// C_zrnk_h2
+
+SEXP ZernikeExpansion_H2(SEXP spec, double rhoi, double phi, SEXP thetas) {
 
   int n, m, l, nr;
   double prefact;
@@ -104,7 +216,7 @@ SEXP ZernikeExpansion_BRDF_Model(SEXP spec, double rhoi, double phi, SEXP thetas
   return brdf;
 }
 
-SEXP C_ozernike(SEXP rho, SEXP phi, SEXP thetas, SEXP spec) {
+SEXP C_zrnk_h2(SEXP rho, SEXP phi, SEXP thetas, SEXP spec) {
 
   int i, j;
 
@@ -114,7 +226,7 @@ SEXP C_ozernike(SEXP rho, SEXP phi, SEXP thetas, SEXP spec) {
   int nc = Rf_xlength(rho);
   int nr = Rf_nrows(spec);
   for(i = 0; i < nc; i++) {
-    vec = ZernikeExpansion_BRDF_Model(spec, REAL(rho)[i], REAL(phi)[i], thetas);
+    vec = ZernikeExpansion_H2(spec, REAL(rho)[i], REAL(phi)[i], thetas);
     for(j = 0; j < nr; j++) {
       REAL(res)[j + i * nr] = REAL(vec)[j];
     }
