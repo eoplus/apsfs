@@ -38,7 +38,6 @@ zrnk_exp <- function(ord, rho, phi, thetav, sym = FALSE) {
     res  <- .Call("C_zrnk_s1", rho, phi, spec)
   } else {
     spec <- .get_spec_comp(ord, thetav, sym)
-print(spec)
     if(!sym) res  <- .Call("C_zrnk_s2", rho, phi, thetav, spec)
     else     res  <- .Call("C_zrnk_h2", rho, phi, thetav, spec)
   }
