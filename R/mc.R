@@ -96,7 +96,7 @@
 #' plot(x[-length(x)], psf_int$bin_phtw[-length(x)], xlab = "Radius (km)", ylab =
 #'   expression(2*pi*integral("r'"*f("r'")*d*"r'", 0, r)))
 #'
-#' @useDynLib apsfs mc_psf
+#' @useDynLib apsfs C_mc_psf
 #' @export
 
 mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw, 
@@ -119,7 +119,7 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
       stop("geom must be 'radial' or 'grid', see Details.", call. = FALSE)
     }
 
-    psf <- .Call("mc_psf", atm, geom, res, ext, snspos, snsfov, snsznt, 
+    psf <- .Call("C_mc_psf", atm, geom, res, ext, snspos, snsfov, snsznt, 
       as.integer(np), mnw, cdf_aer, cdf_ray)
 
     names(psf) <- c("bin_phtw", "dirtw", "bin_brks", "bin_mid")

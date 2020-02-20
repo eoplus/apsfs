@@ -63,8 +63,9 @@ dpsf <- function(psfm, norm = TRUE) {
 #' only. Photons from direct transmission are not included in the caluclations.
 #'
 #' @return
-#' A named vector with the 5 coefficients and the value of the MARE for the 
-#' final model.
+#' A list with the follwoing components: "type": type of the fitted model, 
+#' "coefficients": named vector with the 5 coefficients, and "mare" with the 
+#' value of the mean absolute relative error of the model fit.
 #'
 #' @export
 
@@ -83,16 +84,26 @@ fit_radial_psf <- function(psfm, norm = TRUE) {
     }
 
   # Fit model:
-  x    <- psfm$bin_brks[-1]
-  y    <- cumsum(psfm$bin_phtw)
+  x    <- psfm$bin_brks
+  y    <- c(0, cumsum(psfm$bin_phtw))
   st   <- c(0.5, -0.234, -3.1)
   opt  <- optim(st, optfun, method = "Nelder-Mead", ftot = y, r = x, 
     finf = sum(psfm$bin_phtw))
 
   coef <- opt$par
 
-  return(c(c1 = sum(psfm$bin_phtw), c2 = coef[1], c3 = coef[2], 
-    c4 = (sum(psfm$bin_phtw) - coef[1]), c5 = coef[3], MARE = opt$value))
+  fit <- list(
+    type = "radial",
+    coefficients = c(
+      c1 = sum(psfm$bin_phtw), 
+      c2 = coef[1], c3 = coef[2], 
+      c4 = (sum(psfm$bin_phtw) - coef[1]), 
+      c5 = coef[3]
+    ),
+    mare = opt$value
+  )
+
+  return(fit)
 
 }
 

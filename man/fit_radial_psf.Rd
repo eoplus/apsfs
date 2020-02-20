@@ -12,8 +12,9 @@ fit_radial_psf(psfm, norm = TRUE)
 \item{norm}{Logical. Should the PSF be normalized to sum to unity?}
 }
 \value{
-A named vector with the 5 coefficients and the value of the MARE for the 
-final model.
+A list with the follwoing components: "type": type of the fitted model, 
+"coefficients": named vector with the 5 coefficients, and "mare" with the 
+value of the mean absolute relative error of the model fit.
 }
 \description{
 Fits an exponential model to the annular cumulative integral of a radial grid

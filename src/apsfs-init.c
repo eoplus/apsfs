@@ -6,5 +6,5 @@
 #include "mc_psf.h"
 
 void R_init_apsfs(DllInfo *info) {
-  R_RegisterCCallable("apsfs", "mc_psf", (DL_FUNC) &mc_psf);
+  R_RegisterCCallable("apsfs", "C_mc_psf", (DL_FUNC) &C_mc_psf);
 }

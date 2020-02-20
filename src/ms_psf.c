@@ -53,17 +53,17 @@ double scat_fun (double ru, double* cdf, double *psi, int npsi);
 
 // mc_psf Function:
 
-SEXP mc_psf(SEXP atm, 
-            SEXP geom, 
-            SEXP res, 
-            SEXP ext, 
-            SEXP snspos,
-            SEXP snsfov, 
-            SEXP snsznt, 
-            SEXP np, 
-            SEXP mnw, 
-            SEXP cdf_aer,
-            SEXP cdf_ray) {
+SEXP C_mc_psf(SEXP atm, 
+              SEXP geom, 
+              SEXP res, 
+              SEXP ext, 
+              SEXP snspos,
+              SEXP snsfov, 
+              SEXP snsznt, 
+              SEXP np, 
+              SEXP mnw, 
+              SEXP cdf_aer,
+              SEXP cdf_ray) {
 
   // R format variables for easier handling of R lists:
   SEXP km_in, km, tau, tau_u, tau_d, dkm, dtau, w0_tot, b_ray, b_aer, b_tot;
