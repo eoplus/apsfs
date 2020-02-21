@@ -30,7 +30,7 @@ dpsf <- function(psfm, norm = TRUE) {
       nrow = nrow(psfm$bin_phtw))
     psfan <- psfm$bin_phtw / (mw * t(mw))
 
-  } else if(psfm$metadata$geom == "radial") {
+  } else if(psfm$metadata$geom == "annular") {
 
     psfan <- psfm$bin_phtw / pi / 
       (psfm$bin_brks[-1]^2 - psfm$bin_brks[-length(psfm$bin_brks)]^2)
@@ -43,14 +43,14 @@ dpsf <- function(psfm, norm = TRUE) {
 
 #' PSF annular cumulative integral model
 #'
-#' Fits an exponential model to the annular cumulative integral of a radial grid
-#' PSF. 
+#' Fits an exponential model to the radius cumulative integral of a PSF 
+#' accumulated in annular geometry. 
 #' 
 #' @param psfm An object produced by the function \code{mc_psf}.
 #' @param norm Logical. Should the PSF be normalized to sum to unity?
 #'
 #' @details 
-#' The code calculates the cummulative integral of the radial PSF and fits the 
+#' The code calculates the cummulative integral of the annular PSF and fits the 
 #' following model by optimization:
 #'
 #' F(r) = c1 - (c2 * e^(c3 * r) + c4 * e^(c5 * r))
@@ -69,7 +69,7 @@ dpsf <- function(psfm, norm = TRUE) {
 #'
 #' @export
 
-fit_radial_psf <- function(psfm, norm = TRUE) {
+fit_annular_psf <- function(psfm, norm = TRUE) {
 
   if(norm) psfm$bin_phtw <- psfm$bin_phtw / sum(psfm$bin_phtw)
 
@@ -93,7 +93,7 @@ fit_radial_psf <- function(psfm, norm = TRUE) {
   coef <- opt$par
 
   fit <- list(
-    type = "radial",
+    type = "annular",
     coefficients = c(
       c1 = sum(psfm$bin_phtw), 
       c2 = coef[1], c3 = coef[2], 

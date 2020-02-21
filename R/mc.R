@@ -10,7 +10,7 @@
 #' @param snspos  Sensor position (km; x, y, z), [0,Inf).
 #' @param snsfov  Sensor field of view (radians), [0,2*pi].
 #' @param snsznt  Sensor view zenith angle (radians), [0,pi].
-#' @param geom    One of "radial" or "grid", see Details.
+#' @param geom    One of "annular" or "grid", see Details.
 #' @param res     Resolution (km), [0,10]. See Details.
 #' @param ext     Maximum spatial extent at geom resolution (km), see Details. 
 #' @param np      Number of photons to trace, [0,Inf).
@@ -45,9 +45,9 @@
 #' moved in metric scale. A check is made to verify if photon reached the 
 #' surface or if it escaped the system. If it reached the surface, its intensity
 #' ("photon package weight") is added to the appropriate accumulator bin. The 
-#' accumulator geometry can be: (1) 'radial', which only keep track of the 
+#' accumulator geometry can be: (1) 'annular', which only keep track of the 
 #' annular bin in which the photon reached the surface; or (2) 'grid', which 
-#' will keep track of the {x,y} position. The 'radial' accumulator is 
+#' will keep track of the {x,y} position. The 'annular' accumulator is 
 #' appropriate for symmetrical conditions, as nadir view over a Lambertian 
 #' surface. Note that regardless of extent of the accumulator, a final bin will 
 #' be added between ext and Inf. The resolution of the accumulator will have an
@@ -89,7 +89,7 @@
 #' psi_out <- c(0, 10^seq(log10(0.00001), log10(180), length.out = 1000))
 #' cdf_aer <- calc_cdf(continental_ph_6sv[, c(1, 8)], psi_out)
 #' psf_int <- mc_psf(atm = atm, cdf_aer = cdf_aer, snspos  = c(0, 0, 800), 
-#'   snsfov = 0, snsznt = 0, geom = 'radial', res = 0.03, ext = 10, np = 1E5, 
+#'   snsfov = 0, snsznt = 0, geom = 'annular', res = 0.03, ext = 10, np = 1E5, 
 #'   mnw = 1E-6)
 #' par(mar = c(5, 6, 3, 2))
 #' x <- psf_int$bin_mid
@@ -111,12 +111,12 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
 
   } else {
 
-    if(geom == "radial") {
+    if(geom == "annular") {
       geom <- 1
     } else if(geom == "grid") {
       geom <- 2
     } else {
-      stop("geom must be 'radial' or 'grid', see Details.", call. = FALSE)
+      stop("geom must be 'annular' or 'grid', see Details.", call. = FALSE)
     }
 
     psf <- .Call("C_mc_psf", atm, geom, res, ext, snspos, snsfov, snsznt, 
@@ -144,7 +144,7 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
       snspos  = snspos, 
       snsfov  = snsfov, 
       snsznt  = snsznt, 
-      geom    = ifelse(geom == 1, "radial", "grid"),
+      geom    = ifelse(geom == 1, "annular", "grid"),
       res     = res, 
       ext     = ext, 
       np      = np, 
@@ -171,7 +171,7 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
       "automatically as the final bin break."), call. = FALSE)
 
   if(snsznt != 0 & geom != 'grid')
-    stop(paste0("Results will not be informative for radial accumulation if ",
+    stop(paste0("Results will not be informative for annular accumulation if ",
       "sensor zenith angle is not 0"), call. = FALSE)
 
   np <- round(np)
@@ -184,17 +184,17 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
   # (1) dirtw    - directly transmitted photons;
   # (2) bin_phtw - diffuse transmitted photons.
   dirtw      <- 0
-  if(geom == "radial") {
+  if(geom == "annular") {
     bin_brks <- c(0, seq(res / 2, ext, res), Inf)
     bin_phtw <- numeric(length(bin_brks)-1)
-    bin_accm <- .geom_radial
+    bin_accm <- .geom_annular
   } else if(geom == "grid") {
     bin_brks <- c(seq(res / 2, ext, res), Inf)
     bin_brks <- c(-rev(bin_brks), bin_brks)
     bin_phtw <- matrix(0, ncol = length(bin_brks)-1, nrow = length(bin_brks)-1)
     bin_accm <- .geom_grid_regular
   } else {
-    stop("geom must be 'radial' or 'grid', see Details.", call. = FALSE)
+    stop("geom must be 'annular' or 'grid', see Details.", call. = FALSE)
   }
 
   # Set variables to reduce repetitive calculations:
@@ -399,7 +399,7 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
 
 #' Ancillary functions for accumulators:
 
-.geom_radial <- function(pht, bin_phtw, bin_brks, res) {
+.geom_annular <- function(pht, bin_phtw, bin_brks, res) {
 
   rpht <- sqrt(pht$cpos[1]^2 + pht$cpos[2]^2)
 
