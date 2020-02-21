@@ -84,8 +84,10 @@ fit_annular_psf <- function(psfm, norm = TRUE) {
     }
 
   # Fit model:
-  x    <- psfm$bin_brks
-  y    <- c(0, cumsum(psfm$bin_phtw))
+  # First poisition will always be zero and will be singular in the MARE 
+  # calculation.
+  x    <- psfm$bin_brks[-1]
+  y    <- cumsum(psfm$bin_phtw)
   st   <- c(0.5, -0.234, -3.1)
   opt  <- optim(st, optfun, method = "Nelder-Mead", ftot = y, r = x, 
     finf = sum(psfm$bin_phtw))
