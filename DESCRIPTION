@@ -8,7 +8,8 @@ License: file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: magrittr,
-         rho
+         rho,
+         numDeriv
 Suggests: 
     knitr,
     rmarkdown

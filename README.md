@@ -26,10 +26,11 @@ generic that might be of use to others. It is provided as is, without warranties
 
 ### Install from Github:
 
-The package depends on magrittr.
+The package depends on packages magrittr and numDeriv and on the unpublished package rho.
 
 ```
-# install.packages(c("remotes", "magrittr"))
+# install.packages(c("remotes", "magrittr", "numDeriv"))
+# remotes::install_github("AlexCast/rho")
 remotes::install_github("AlexCast/apsfs")
 ```
 

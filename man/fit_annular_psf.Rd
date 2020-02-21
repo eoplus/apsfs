@@ -24,7 +24,9 @@ accumulated in annular geometry.
 The code calculates the cummulative integral of the annular PSF and fits the 
 following model by optimization:
 
-F(r) = c1 - (c2 * e^(c3 * r) + c4 * e^(c5 * r))
+F(r) = c1 - (c2 * e^(c3 * r) + c4 * e^(c5 * r) + c6 * e^(c7 * r)),
+
+where c2 + c4 + c6 = c1.
 
 The cummulative annular integral PSF is as known as "environmental function".
 The optimization is made with mean absolute relative error (MARE) as the 
