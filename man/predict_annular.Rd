@@ -4,23 +4,28 @@
 \alias{predict_annular}
 \title{Predict annular PSF fitted model}
 \usage{
-predict_annular(r, fit, cum = FALSE)
+predict_annular(r, fit, type = c("psf", "dpsf", "cumpsf"))
 }
 \arguments{
 \item{r}{The radius distances (km) at which the model should be evaluated.}
 
 \item{fit}{A model fit from \code{fit_annular_psf}.}
 
-\item{cum}{Logical. Should the cummulative PSF be returned? Defaults to FALSE.}
+\item{type}{Type of prediction: 'psf', 'dpsf', or 'cumpsf'. See Details.}
 }
 \value{
-A numeric vetor with the PSF (or cummulative PSF).
+A numeric vetor with the PSF, dPSF/dArea or cumulative PSF.
 }
 \description{
 Solves a fitted model from \code{fit_annular_psf} for the PSF of the radial 
 cummulative PSF at requested radius.
 }
 \details{
-If cum = FALSE, the derivative of the cummulative PSF model fit will 
-be returned, which is the PSF at the desired radius.
+If type = cumpsf, the model fit to the cumulative PSF will be 
+evaluated at the desired radius points. If type = dpsf, the area derivative 
+the PSF dPSF/dArea is returned. If type == psf, quadrature is used to on the 
+average area derivative of the annulus and scaled by the area of the annulus. 
+Note that in this case, the returned values are for the mid points of the 
+input vector of radius, so will have a length of length(r) - 1. Default is to 
+return the PSF.
 }

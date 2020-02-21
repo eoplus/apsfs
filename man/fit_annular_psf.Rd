@@ -4,12 +4,12 @@
 \alias{fit_annular_psf}
 \title{PSF annular cumulative integral model}
 \usage{
-fit_annular_psf(psfm, norm = TRUE)
+fit_annular_psf(x, y = NULL, norm = TRUE)
 }
 \arguments{
-\item{psfm}{An object produced by the function \code{mc_psf}.}
-
 \item{norm}{Logical. Should the PSF be normalized to sum to unity?}
+
+\item{psfm}{An object produced by the function \code{mc_psf}.}
 }
 \value{
 A list with the follwoing components: "type": type of the fitted model, 
