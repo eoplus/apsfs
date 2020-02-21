@@ -22,7 +22,7 @@ mc_psf(
 \arguments{
 \item{atm}{Atmosphere model, see Details.}
 
-\item{geom}{One of "radial" or "grid", see Details.}
+\item{geom}{One of "annular" or "grid", see Details.}
 
 \item{res}{Resolution (km), [0,10]. See Details.}
 
@@ -82,9 +82,9 @@ At each iteration, a free optical path is sampled and the photon package is
 moved in metric scale. A check is made to verify if photon reached the 
 surface or if it escaped the system. If it reached the surface, its intensity
 ("photon package weight") is added to the appropriate accumulator bin. The 
-accumulator geometry can be: (1) 'radial', which only keep track of the 
+accumulator geometry can be: (1) 'annular', which only keep track of the 
 annular bin in which the photon reached the surface; or (2) 'grid', which 
-will keep track of the {x,y} position. The 'radial' accumulator is 
+will keep track of the {x,y} position. The 'annular' accumulator is 
 appropriate for symmetrical conditions, as nadir view over a Lambertian 
 surface. Note that regardless of extent of the accumulator, a final bin will 
 be added between ext and Inf. The resolution of the accumulator will have an

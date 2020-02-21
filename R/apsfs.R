@@ -1,4 +1,4 @@
-#' Atmospheric Point Spread Function Simulation
+#' \pkg{apsfs}: Atmospheric Point Spread Function Simulation
 #'
 #' This package contains functions to calculate the atmopsheric point spread 
 #' function (PSF) for a given geometry and atmospheric composition and profile 
@@ -57,5 +57,7 @@
 #'        scattering phase function
 #' }
 #'
-#' @export
+#' @author Alexandre Castagna
+#' @docType package
+#' @name apsfs-package
 NULL
