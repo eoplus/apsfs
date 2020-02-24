@@ -198,9 +198,10 @@ fit_annular_psf <- function(psfm, press = NULL, norm = TRUE, nstart = 10) {
 #' Solves a fitted model from \code{fit_annular_psf} for the PSF of the radial 
 #' cummulative PSF at requested radius.
 #'
-#' @param r    The radius distances (km) at which the model should be evaluated.
-#' @param fit  A model fit from \code{fit_annular_psf}.
-#' @param type Type of prediction: 'psf', 'dpsf', or 'cumpsf'. See Details.
+#' @param r     The radius distances (km) at which the model should be evaluated.
+#' @param fit   A model fit from \code{fit_annular_psf}.
+#' @param type  Type of prediction: 'psf', 'dpsf', or 'cumpsf'. See Details.
+#' @param press Pressure in mbar or NULL. See details.
 #'
 #' @details If type = cumpsf, the model fit to the cumulative PSF will be 
 #' evaluated at the desired radius points. If type = dpsf, the area derivative 
@@ -273,6 +274,85 @@ predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf"),
   psf
 }
 
+#' Predict PSF grid from fitted model
+#'
+#' Predicts a PSF grid from annular or grid fitted models.
+#'
+#' @param f_aer Grid or annular fit to aerosol PSF
+#' @param f_aer Grid or annular fit to Rayleigh PSF
+#' @param tray  Transmittance due to Rayleigh
+#' @param taer  Transmittance due to aerosols
+#' @param ext   Maximum spatial extent at geom resolution (km).
+#' @param res   Resolution (km), [0,10].
+#' @param press Pressure in mbar or NULL.
+#'
+#' @export
 
+predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0, 
+  res = 0.03, press = NULL, view = 0) {
 
+# note: grid model will contain the annular model, since Zernikes will be fit to difference to nadir...
+
+  if(f_aer$type == f_ray$type & f_aer$type == "annular") {
+    .annular_kernel(f_aer, f_ray, tray, taer, ext, res, press, view)
+  } else {
+    # NOT IMPLEMENTED YET...
+  }
+
+}
+
+.annular_kernel <- function(f_aer, f_ray, tray, taer, ext = 0, res = 0.03, 
+  press = NULL) {
+
+  if(ext < (res + res / 2))
+    stop("Radial extent has to be equal of larger than res+res/2")
+
+  # Construct the the weighted cumulative function for calculation of 
+  # derivative.
+  fun_grad <- function(r, press) {
+    fa <- predict_annular(r, f_aer, "cumpsf", press)
+    fr <- predict_annular(r, f_ray, "cumpsf", press)
+    ft <- (tray * fr + taer * fa) / (tray + taer)
+    ft[which(is.na(ft))] <- 0
+    return(ft)
+  }
+
+  # If ex == 0 search the extent that results in 60% of diffuse transmittance
+  if(ext == 0) {
+    ext <- optim(3, function(x) { abs(fun_grad(x) - 0.6) }, method = "Brent", 
+      lower = 0, upper = 100)$par * 1000
+  }
+
+  # This section creates a matrix of radial distances to pixel corners
+  xvec <- seq(res / 2, ext, by = res)
+  xvec <- c(rev(-xvec), xvec)
+  yvec <- xvec
+  xy   <- expand.grid(xvec, yvec)
+  r    <- sqrt(apply(xy^2, 1, sum))
+  rm   <- matrix(r, ncol = length(xvec)) / 1000 # m to Km conversion
+
+  # Calculate the per area weight function at the pixel vertices and calculate
+  # the trapezoidal average for each pixel and the weight per pixel given its 
+  # area.
+  require(numDeriv)
+  wm   <- grad(fun_grad, x = rm, press = press) / 2 / pi / rm
+  wm   <- wm[-1, ] + wm[-nrow(wm), ]
+  wm   <- wm[, -1] + wm[, -ncol(wm)]
+  wm   <- (res / 1000)^2 * wm / 4
+  
+  # The weight at the center pixel (target pixel) is more correctly calculated 
+  # by evaluating the cumulative function at an r of a circle with equivalent 
+  # area.
+  rgt <- sqrt((res / 1000)^2 / pi)
+  # id  <- (ncol(wm) + 1) / 2
+  # wm[id, id] <- fun_grad(rgt, press = press)
+  id <- which(wm == max(wm, na.rm = T))
+  wm[id] <- fun_grad(rgt, press = press)
+
+  # Focal function requires an odd number of columns and rows.
+  if((nrow(wm) %% 2) == 0) w <- rbind(wm, rep(0, ncol(wm)))
+  if((ncol(wm) %% 2) == 0) w <- cbind(wm, rep(0, nrow(wm)))
+
+  return(wm)
+}
 

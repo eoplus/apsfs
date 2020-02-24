@@ -12,6 +12,8 @@ predict_annular(r, fit, type = c("psf", "dpsf", "cumpsf"), press = NULL)
 \item{fit}{A model fit from \code{fit_annular_psf}.}
 
 \item{type}{Type of prediction: 'psf', 'dpsf', or 'cumpsf'. See Details.}
+
+\item{press}{Pressure in mbar or NULL. See details.}
 }
 \value{
 A numeric vetor with the PSF, dPSF/dArea or cumulative PSF.
