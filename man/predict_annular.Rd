@@ -25,7 +25,7 @@ If type = cumpsf, the model fit to the cumulative PSF will be
 evaluated at the desired radius points. If type = dpsf, the area derivative 
 the PSF dPSF/dArea is returned. If type == psf, quadrature is used to on the 
 average area derivative of the annulus and scaled by the area of the annulus. 
-Note that in this case, the returned values are for the mid points of the 
-input vector of radius, so will have a length of length(r) - 1. Default is to 
-return the PSF.
+Note that in this case, r will be sorted and the returned values are for the 
+mid points of the input vector of radius, so will have a length of 
+length(r) - 1. Default is to return the PSF.
 }

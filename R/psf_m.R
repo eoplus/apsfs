@@ -206,9 +206,9 @@ fit_annular_psf <- function(psfm, press = NULL, norm = TRUE, nstart = 10) {
 #' evaluated at the desired radius points. If type = dpsf, the area derivative 
 #' the PSF dPSF/dArea is returned. If type == psf, quadrature is used to on the 
 #' average area derivative of the annulus and scaled by the area of the annulus. 
-#' Note that in this case, the returned values are for the mid points of the 
-#' input vector of radius, so will have a length of length(r) - 1. Default is to 
-#' return the PSF.
+#' Note that in this case, r will be sorted and the returned values are for the 
+#' mid points of the input vector of radius, so will have a length of 
+#' length(r) - 1. Default is to return the PSF.
 #'
 #' @return A numeric vetor with the PSF, dPSF/dArea or cumulative PSF.
 #'
@@ -240,7 +240,9 @@ predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf"),
                 stop("type must be one of 'psf', 'dpsf', or 'cumpsf'", 
                   call. = FALSE)
          )
-  fun(sort(r), press, fit)
+
+  if(type == "psf") r <- sort(r)
+  fun(r = r, press = press, fit = fit)
 }
 
 .pred_annular_cum <- function(r, press, fit) {
@@ -264,9 +266,10 @@ predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf"),
 }
 
 .pred_annular_psf <- function(r, press, fit) {
-  dpsf <- .pred_annular_den(r, press, fit)
+  dpsf <- .pred_annular_den(r = r, press = press, fit = fit)
   psf  <- pi * diff(r^2) * (dpsf[-1] + dpsf[-length(dpsf)]) / 2
-  if(r[1] == 0) psf[1] <- .pred_annular_den(r[2], press, fit) * 2 * pi * r[2]
+  if(r[1] == 0)
+    psf[1] <- .pred_annular_den(r = r[2], press = press, fit = fit) * 2 * pi * r[2]
   psf
 }
 
