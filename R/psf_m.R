@@ -43,55 +43,103 @@ dpsf <- function(psfm, norm = TRUE) {
 
 #' PSF annular cumulative integral model
 #'
-#' Fits an exponential model to the radius cumulative integral of a PSF 
-#' accumulated in annular geometry. 
+#' Fits an exponential model to the radius cumulative integral of a PSF in 
+#' annular geometry of a given scatter model, possibly with pressure dependency. 
 #' 
-#' @param psfm An object produced by the function \code{mc_psf}.
-#' @param norm Logical. Should the PSF be normalized to sum to unity?
+#' @param psfm   A list of objects created by the function \code{mc_psf}.
+#' @param press  Pressure in mbar or NULL. See details.
+#' @param norm   Logical. Should the PSF be normalized to sum to unity?
+#' @param nstart Number of random start positions for the multidimension 
+#'               function optimization.
 #'
-#' @details 
-#' The code calculates the cummulative integral of the annular PSF and fits the 
-#' following model by optimization:
+#' @details
+#' The function calculates the (normalized) cumulative integral of the annular 
+#' PSF and fits the following model by optimization:
 #'
 #' F(r) = c1 - (c2 * e^(c3 * r) + c4 * e^(c5 * r) + c6 * e^(c7 * r)),
 #'
-#' where c2 + c4 + c6 = c1.
+#' c1 = x1,
+#' c2 = x2 / p,
+#' c3 = x3 / p,
+#' c4 = (c1 - c2) * x4,
+#' c5 = x5,
+#' c6 = (c1 - c2) * (1 - x4),
+#' c7 = x6,
+#' p  = press / 1013.25,
+#' and x1 to x5 are model parameters. Note that x1 = total diffuse transmittance
+#' (or 1, if norm = TRUE) and that c2 + c4 + c6 = c1.
 #'
-#' The cummulative annular integral PSF is as known as "environmental function".
+#' If there is no pressure dependency (e.g., aerosol only), 'press' does not 
+#' need to be specified. Internally, it will be set to 1013.25 mbar, p will 
+#' equal unity and the pressure flag will be set to FALSE in the fit object 
+#' metadata. The prediction function \code{predict_annular}, will track 
+#' dependency on pressure and model domain.
+#'
+#' Note that adding multiple models in the input list will only be meaningfull 
+#' if they are simulations for the same scatter at different surface pressure 
+#' levels. If psfm is a list with more than one component and press is 
+#' specified, norm is automatically set to TRUE.
+#'
+#' The cumulative annular integral PSF is as known as "environmental function".
 #' The optimization is made with mean absolute relative error (MARE) as the 
 #' error function.
 #'
 #' Note that 'PSF' in this package refers to the diffusely transmitted photons 
-#' only. Photons from direct transmission are not included in the caluclations.
+#' only. Photons from direct transmission are simulated and are part of the PSF,
+#' but not included in the fit calculations.
 #'
 #' @return
-#' A list with the follwoing components: "type": type of the fitted model, 
-#' "coefficients": named vector with the 5 coefficients, and "mare" with the 
-#' value of the mean absolute relative error of the model fit.
+#' A list with the following components: 
+#' "type":         type of the fitted model; 
+#' "coefficients": named vector with the 6 coefficients;
+#' "mare":         the minimum mean absolute relative error of the model fit; 
+#' "mare_seq":     a sorted sequence of MARE of different random starts;
+#' "convergence":  convergence code from \code{optim};
+#' "press_dep":    logical flag indicating if there was pressure dependency; 
+#' "press_rng":    the range of pressure values if fitted with pressure 
+#'                 dependency.
+#' @examples
+#'
+#' psfm <- list(
+#'  ray_res003_v00_p1100_annular,
+#'  ray_res003_v00_p1013_annular,
+#'  ray_res003_v00_p0750_annular,
+#'  ray_res003_v00_p0500_annular
+#' )
+#' press <- rep(c(1100, 1013.25, 750, 500), each = length(ray_res003_v00_p0500_annular$bin_mid))
+#' opt   <- fit_annular_psf(psfm, press = press, norm = TRUE, nstart = 30)
+#' opt
+#' plot(opt$mare_seq, xlab = "Iteration", ylab = "MARE")
 #'
 #' @export
 
-fit_annular_psf <- function(x, y = NULL, norm = TRUE) {
+fit_annular_psf <- function(psfm, press = NULL, norm = TRUE, nstart = 10) {
 
-  if(is(x, 'list')) {
-    if(!is.null(x$bin_phtw)) {
-      psfm <- x
-      x    <- psfm$bin_brks[-1]
-      y    <- cumsum(psfm$bin_phtw)
-      if(norm) y <- y / sum(y)
+  if(length(psfm) > 1 & any(!is.null(press))) norm <- TRUE
+  if(any(is.null(press)) & length(psfm) > 1)
+    stop("psfm length > 1 but press not specified.", call. = FALSE)
+
+
+  if(norm) {
+    for(i in 1:length(psfm)) {
+      psfm[[i]]$bin_phtw <- psfm[[i]]$bin_phtw / sum(psfm[[i]]$bin_phtw)
     }
-  } else if(is.null(y)) {
-    stop("If x is not a psf simulation, y must be provided", call. = FALSE)
-  } else if(norm) {
-    paste("When x and y are vectors, normalization should be done in y before",
-      "calling this function") %>%
-    stop(., call. = FALSE)
+  }
+
+  if(is.null(press)) {
+    press <- 1
+    pdep  <- FALSE
+  } else {
+    press <- press / 1013.25
+    pdep  <- TRUE
   }
 
   # Build function to be optimized:
-  optfun <- function(x, ftot, r, finf, error = T) {
-    est  <- finf - (x[1] * exp(x[2] * r) + (finf - x[1]) * x[3] * exp(x[4] * r) + 
-      (finf - x[1]) * (1 - x[3]) * exp(x[5] * r))
+  optfun <- function(x, ftot, r, finf, error = T, press) {
+    xp1  <- x[1] * press^-1
+    xp2  <- x[2] * press^-1
+    est  <- finf - (xp1 * exp(xp2 * r) + (finf - xp1) * x[3] * exp(x[4] * r) + 
+      (finf - xp1) * (1 - x[3]) * exp(x[5] * r))
     if(error) {
       return(mean(abs(est - ftot) / ftot, na.rm = TRUE))
     } else {
@@ -102,9 +150,25 @@ fit_annular_psf <- function(x, y = NULL, norm = TRUE) {
   # Fit model:
   # First poisition will always be zero and will be singular in the MARE 
   # calculation.
-  st   <- c(0.5, -0.234, 0.45, -3.1, -1)
+  vals <- numeric(nstart + 1)
+  x    <- rep(psfm[[1]]$bin_brks[-1], length(psfm))
+  y    <- NULL
+  for(i in 1:length(psfm)) {
+    y <- c(y, cumsum(psfm[[i]][[1]]))
+  }
+  st   <- c(0.05, -0.14, 0.23, -0.32, -0.05)
   opt  <- optim(st, optfun, method = "Nelder-Mead", ftot = y, r = x, 
-    finf = max(y), control = list(maxit = 1E6))
+    finf = max(y), control = list(maxit = 1E6), press = press)
+  vals[1] <- opt$value
+
+  for(i in 1:nstart) {
+    st   <- runif(5, 0, 1) * c(1, -1, 1, -1, -1)
+    optr <- optim(st, optfun, method = "Nelder-Mead", ftot = y, r = x, 
+      finf = max(y), control = list(maxit = 1E6), press = press)
+    vals[i + 1] <- optr$value
+    if(optr$value < opt$value)
+      opt <- optr
+  }
 
   coef <- opt$par
 
@@ -114,13 +178,15 @@ fit_annular_psf <- function(x, y = NULL, norm = TRUE) {
       c1 = max(y), 
       c2 = coef[1], 
       c3 = coef[2], 
-      c4 = (max(y) - coef[1]) * coef[3], 
+      c4 = coef[3], 
       c5 = coef[4],
-      c6 = (max(y) - coef[1]) * (1 - coef[3]),
-      c7 = coef[5]
+      c6 = coef[5]
     ),
     mare = opt$value,
-    convergence = opt$convergence
+    mare_seq = sort(vals, decreasing = T),
+    convergence = opt$convergence,
+    press_dep = pdep,
+    press_rng = range(press * 1013.25)
   )
 
   fit
@@ -148,7 +214,24 @@ fit_annular_psf <- function(x, y = NULL, norm = TRUE) {
 #'
 #' @export
 
-predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf")) {
+predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf"), 
+  press = NULL) {
+
+  if(is.null(press) & !fit$press_dep) {
+    press <- 1013.25
+  } else {
+    stop("'press' not specified for model fitted with pressure dependency", 
+      call. = FALSE)
+  }
+
+  if(fit$press_dep) {
+    if(any(press < fit$press_rng[1] | press > fit$press_rng[2]))
+      paste0("Requested pressure beyond model domain of ", fit$press_rng[1], 
+        " to ", fit$press_rng[2]) %>%
+      warning(., call. = FALSE)
+  }
+
+  press <- press / 1013.25
 
   fun <- switch(type[1],
                 "cumpsf" = .pred_annular_cum,
@@ -157,83 +240,36 @@ predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf")) {
                 stop("type must be one of 'psf', 'dpsf', or 'cumpsf'", 
                   call. = FALSE)
          )
-  fun(sort(r), fit)
+  fun(sort(r), press, fit)
 }
 
-.pred_annular_cum <- function(r, fit) {
-  coeff <- fit$coefficients
-  res   <- coeff[1] - (coeff[2] * exp(coeff[3] * r) + coeff[4] * exp(coeff[5] * r) + 
-    coeff[6] * exp(coeff[7] * r))
+.pred_annular_cum <- function(r, press, fit) {
+  cf  <- fit$coefficients
+  c1  <- cf[1]
+  c2  <- cf[2] * press^-1
+  c3  <- cf[3] * press^-1
+  c4  <- (c1 - c2) * cf[4]
+  c5  <- cf[5]
+  c6  <- (c1 - c2) * (1 - cf[4])
+  c7  <- cf[6]
+  
+  res <- c1 - (c2 * exp(c3 * r) + c4 * exp(c5 * r) + c6 * exp(c7 * r))
+
   res[is.na(res)] <- 0
   res
 }
 
-.pred_annular_den <- function(r, fit) {
-  numDeriv::grad(.pred_annular_cum, x = r, fit = fit) / 2 / pi / r
+.pred_annular_den <- function(r, press, fit) {
+  numDeriv::grad(.pred_annular_cum, x = r, press = press, fit = fit) / 2 / pi / r
 }
 
-.pred_annular_psf <- function(r, fit) {
-  dpsf <- .pred_annular_den(r, fit)
+.pred_annular_psf <- function(r, press, fit) {
+  dpsf <- .pred_annular_den(r, press, fit)
   psf  <- pi * diff(r^2) * (dpsf[-1] + dpsf[-length(dpsf)]) / 2
+  if(r[1] == 0) psf[1] <- .pred_annular_den(r[2], press, fit) * 2 * pi * r[2]
+  psf
 }
 
 
-#' PSF grid density model
-#'
-#' under development...
-#'
-#' @export
 
-fit_grid_dpsf <- function(psfm, norm = TRUE) {
-
-
-#  xy  <- psfm$bin_mid
-#  xy  <- xy[-c(1, length(xy))]
-#  xy  <- expand.grid(y = xy, x = xy)[, 2:1]
-
-#  wf <- an_psf(psfm)
-#  wf <- wf[, -c(1, ncol(wf))]
-#  wf <- wf[-c(1, nrow(wf)), ]
-
-#  df <- cbind(xy, wf = as.vector(wf))
-#  coordinates(df) <- ~x+y
-
-
-#  xo  <- seq(0.03 / 2, psfm$metadata$ext, by = 0.03)
-#  xo  <- c(rev(-xo), xo)
-#  xo  <- (xo[-1] + xo[-length(xo)]) / 2
-#  tp  <- akima::interp(df, z = 'wf', xo = xo, yo = xo, linear = T, nx = length(xo), ny = length(xo))
-
-  require(zernike)
-
-  xy  <- psfm$bin_mid
-  xy  <- xy[-c(1, length(xy))]
-  xy  <- expand.grid(xy, xy)
-  rho <- sqrt(apply(xy^2, 1, sum))
-  id  <- which(rho > 1)
-  rho <- rho[-id]
-
-  theta <- acos(apply(xy, 1, function(x) { sum(x * c(0, 1)) / sqrt(sum(x^2)) }))
-  theta[which(is.na(theta))] <- 0
-  theta <- matrix(theta, ncol = ncol(psfm$bin_phtw)-2)
-  nr <- (nrow(theta)-1) / 2
-  theta[1:nr,] <- (2 * pi - theta[1:nr,])
-  dim(theta) <- NULL  
-  theta <- theta[-id]
-
-  wf <- psfm$bin_phtw
-  wf[rho < 0.1] <- 1E-5
-#  wf <- log(-log(wf))
-#  wf[is.infinite(wf)] <- -6
-  wf <- wf[, -c(1, ncol(wf))]
-  wf <- wf[-c(1, nrow(wf)), ]
-  dim(wf) <- NULL
-  wf <- wf[-id]
-
-
-  zfit  <- zernike::fitzernikes(wf, rho, theta, phi = 0, maxorder = 40, uselm = TRUE)
-
-
-  return(zfit)
-}
 

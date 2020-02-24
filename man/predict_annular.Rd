@@ -4,7 +4,7 @@
 \alias{predict_annular}
 \title{Predict annular PSF fitted model}
 \usage{
-predict_annular(r, fit, type = c("psf", "dpsf", "cumpsf"))
+predict_annular(r, fit, type = c("psf", "dpsf", "cumpsf"), press = NULL)
 }
 \arguments{
 \item{r}{The radius distances (km) at which the model should be evaluated.}
