@@ -219,7 +219,7 @@ predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf"),
 
   if(is.null(press) & !fit$press_dep) {
     press <- 1013.25
-  } else {
+  } else if(is.null(press) & fit$press_dep) {
     stop("'press' not specified for model fitted with pressure dependency", 
       call. = FALSE)
   }
