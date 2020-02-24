@@ -294,7 +294,9 @@ predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0,
 # note: grid model will contain the annular model, since Zernikes will be fit to difference to nadir...
 
   if(f_aer$type == f_ray$type & f_aer$type == "annular") {
-    .annular_kernel(f_aer, f_ray, tray, taer, ext, res, press, view)
+    if(view != 0)
+      stop("'view' must be zero with annular fitted models", call. = FALSE)
+    .annular_kernel(f_aer, f_ray, tray, taer, ext, res, press)
   } else {
     # NOT IMPLEMENTED YET...
   }
