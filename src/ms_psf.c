@@ -166,7 +166,7 @@ SEXP C_mc_psf(SEXP atm,
 
   } else if(geomi == 2) { // (2) "sectorial"
 
-    n_brks = 2 * ((exti - resi) / resi + 2);
+    n_brks = (exti - resi) / resi + 3;
     bin_phtw = (double*) calloc((n_brks - 1) * 360, sizeof(double));
     bin_brks = (double*) calloc(n_brks, sizeof(double));
     bin_brks[0] = 0;

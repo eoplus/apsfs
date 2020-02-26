@@ -30,6 +30,11 @@ dpsf <- function(psfm, norm = TRUE) {
       nrow = nrow(psfm$bin_phtw))
     psfan <- psfm$bin_phtw / (mw * t(mw))
 
+  } else if(psfm$metadata$geom == "sectorial") {
+
+    psfan <- psfm$bin_phtw / (1 * pi / 180) /
+      (psfm$bin_brks[-1]^2 - psfm$bin_brks[-length(psfm$bin_brks)]^2)
+
   } else if(psfm$metadata$geom == "annular") {
 
     psfan <- psfm$bin_phtw / pi / 
