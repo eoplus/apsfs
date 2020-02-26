@@ -165,13 +165,16 @@ SEXP C_mc_psf(SEXP atm,
     bin_accm = &accm_annular;
 
   } else if(geomi == 2) { // (2) "sectorial"
-
     n_brks = (exti - resi) / resi + 3;
     bin_phtw = (double*) calloc((n_brks - 1) * 360, sizeof(double));
     bin_brks = (double*) calloc(n_brks, sizeof(double));
     bin_brks[0] = 0;
     bin_brks[1] = resi / 2;
     bin_brks[n_brks - 1] = INFINITY;
+
+//printf("Extent is: %f\n", exti);
+//printf("Resolution is: %f\n", resi);
+//printf("Breaks length is: %d\n", n_brks);
     
     for(i = 2; i < n_brks - 1; i++) {
 
@@ -624,9 +627,13 @@ void accm_sectorial (struct str_phtpkg pht,
   double azmt = 0;
 
   rpht = sqrt(pow(pht.cpos[0], 2.0) + pow(pht.cpos[1], 2.0));
-  azmt = acos(pht.cpos[1] / rpht);
-  if(pht.cpos[0] > 0.0) {
-    azmt = (2.0 * M_PI) - azmt;
+  if(rpht < 1E-12) {
+    azmt = 2.0 * M_PI * gsl_rng_uniform (random);
+  } else {
+    azmt = acos(pht.cpos[1] / rpht);
+    if(pht.cpos[0] > 0.0) {
+      azmt = (2.0 * M_PI) - azmt;
+    }
   }
 
   rid = findInterv(rpht, bin_brks, n);
