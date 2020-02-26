@@ -628,7 +628,7 @@ void accm_sectorial (struct str_phtpkg pht,
 
   rpht = sqrt(pow(pht.cpos[0], 2.0) + pow(pht.cpos[1], 2.0));
   if(rpht < 1E-12) {
-    azmt = 2.0 * M_PI * gsl_rng_uniform (random);
+    azmt = 2.0 * M_PI;
   } else {
     azmt = acos(pht.cpos[1] / rpht);
     if(pht.cpos[0] > 0.0) {
