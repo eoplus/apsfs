@@ -205,6 +205,10 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
     bin_brks <- c(0, seq(res / 2, ext, res), Inf)
     bin_phtw <- numeric(length(bin_brks)-1)
     bin_accm <- .geom_annular
+  } else if(geom == "sectorial") {
+    bin_brks <- c(0, seq(res / 2, ext, res), Inf)
+    bin_phtw <- matrix(0, ncol = 360, nrow = length(bin_brks)-1)
+    bin_accm <- .geom_sectorial
   } else if(geom == "grid") {
     bin_brks <- c(seq(res / 2, ext, res), Inf)
     bin_brks <- c(-rev(bin_brks), bin_brks)
@@ -428,6 +432,22 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
   id   <- findInterval(x = rpht, vec = bin_brks, left.open = TRUE, 
     all.inside = TRUE)
   bin_phtw[id] <- bin_phtw[id] + pht$stks[1]
+
+  return(bin_phtw)
+
+}
+
+.geom_sectorial <- function(pht, bin_phtw, bin_brks, res) {
+
+  rpht <- sqrt(pht$cpos[1]^2 + pht$cpos[2]^2)
+  azmt <- pht$cpos[2] / rpht
+  if(pht$cpos[2] > 0) azmt <- (2 * pi) - azmt
+
+  rid  <- findInterval(x = rpht, vec = bin_brks, left.open = TRUE, 
+    all.inside = TRUE)
+  aid  <- floor(azmt * 180 / pi) + 1
+
+  bin_phtw[rid[1], aid[2]] <- bin_phtw[rid[1], aid[2]] + pht$stks[1]
 
   return(bin_phtw)
 
