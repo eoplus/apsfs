@@ -45,7 +45,8 @@ struct str_phtpkg {
 // Function skeletons:
 
 int  findInterv(double val, double* brks, size_t n);
-void accm_radial (struct str_phtpkg pht, double* bin_phtw, double* bin_brks, size_t n);
+void accm_annular (struct str_phtpkg pht, double* bin_phtw, double* bin_brks, size_t n);
+void accm_sectorial (struct str_phtpkg pht, double* bin_phtw, double* bin_brks, size_t n);
 void accm_grid (struct str_phtpkg pht, double* bin_phtw, double* bin_brks, size_t n);
 void mvpht_m (struct str_phtpkg* pht, double s, SEXP tau, SEXP tau_u, SEXP tau_d, SEXP c_tot, SEXP dkm, int cid, R_xlen_t atm_n);
 void update_cdir (double psi, double phi, double *cdir);
@@ -146,7 +147,7 @@ SEXP C_mc_psf(SEXP atm,
   // (1) dirtw    - directly transmitted photons;
   // (2) bin_phtw - diffuse transmitted photons.
   dirtw = 0;
-  if(geomi == 1) { // (1) radial
+  if(geomi == 1) { // (1) annular
 
     n_brks = (exti - resi) / resi + 3;
     bin_phtw = (double*) calloc(n_brks - 1, sizeof(double));
@@ -161,9 +162,26 @@ SEXP C_mc_psf(SEXP atm,
 
     }
 
-    bin_accm = &accm_radial;
+    bin_accm = &accm_annular;
 
-  } else if(geomi == 2) { // (2) "grid"
+  } else if(geomi == 2) { // (2) "sectorial"
+
+    n_brks = 2 * ((exti - resi) / resi + 2);
+    bin_phtw = (double*) calloc((n_brks - 1) * 360, sizeof(double));
+    bin_brks = (double*) calloc(n_brks, sizeof(double));
+    bin_brks[0] = 0;
+    bin_brks[1] = resi / 2;
+    bin_brks[n_brks - 1] = INFINITY;
+    
+    for(i = 2; i < n_brks - 1; i++) {
+
+      bin_brks[i] = bin_brks[i - 1] + resi;
+
+    }
+
+    bin_accm = &accm_sectorial;
+
+  } else if(geomi == 3) { // (3) "grid"
 
     n_brks = 2 * ((exti - resi) / resi + 2);
     bin_phtw = (double*) calloc((n_brks - 1) * (n_brks - 1), sizeof(double));
@@ -185,8 +203,7 @@ SEXP C_mc_psf(SEXP atm,
 
     bin_accm = &accm_grid;
 
-  } 
-
+  }
   // Set variables to reduce repetitive calculations:
   sid     = findInterv(snsposi[2], (double*) REAL(km_in), (int) atm_n);
   sod =   REAL(tau_u)[sid] + REAL(dtau)[sid] * (REAL(km_in)[sid] - snsposi[2]) / REAL(dkm)[sid];
@@ -553,17 +570,17 @@ int findInterv (double val,
 
 }
 
-// Accumulator function for radial geometry
+// Accumulator function for annular geometry
 //
 // pht      = photon package
 // bin_phtw = photon accumulator
 // bin_brks = vector of breaks
 // n        = length of bin_brks
 
-void accm_radial (struct str_phtpkg pht, 
-                  double* bin_phtw, 
-                  double* bin_brks,
-                  size_t n) {
+void accm_annular (struct str_phtpkg pht, 
+                   double* bin_phtw, 
+                   double* bin_brks,
+                   size_t n) {
 
   int    id;
   double rpht = 0;
@@ -571,6 +588,36 @@ void accm_radial (struct str_phtpkg pht,
   rpht = sqrt(pow(pht.cpos[0], 2.0) + pow(pht.cpos[1], 2.0));
 
   id = findInterv(rpht, bin_brks, n);
+
+  bin_phtw[id] += pht.stks[0];
+
+}
+
+// Accumulator function for sectorial geometry
+//
+// pht      = photon package
+// bin_phtw = photon accumulator
+// bin_brks = vector of breaks
+// n        = length of bin_brks
+
+void accm_sectorial (struct str_phtpkg pht, 
+                double* bin_phtw, 
+                double* bin_brks, 
+                size_t n) {
+
+  int id, rid, aid;
+  double rpht = 0;
+  double azmt = 0;
+
+  rpht = sqrt(pow(pht.cpos[0], 2.0) + pow(pht.cpos[1], 2.0));
+  azmt = acos(pht.cpos[1] / rpht);
+  if(pht.cpos[1] > 0.0) {
+    azmt = (2.0 * M_PI) - azmt;
+  }
+
+  rid = findInterv(rpht, bin_brks, n);
+  aid = (int) floor(azmt * 180.0 / M_PI);
+  id  = (n - 1) * aid + rid;
 
   bin_phtw[id] += pht.stks[0];
 

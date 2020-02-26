@@ -10,7 +10,7 @@
 #' @param snspos  Sensor position (km; x, y, z), [0,Inf).
 #' @param snsfov  Sensor field of view (radians), [0,2*pi].
 #' @param snsznt  Sensor view zenith angle (radians), [0,pi].
-#' @param geom    One of "annular" or "grid", see Details.
+#' @param geom    One of "annular", "sectorial" or "grid", see Details.
 #' @param res     Resolution (km), [0,10]. See Details.
 #' @param ext     Maximum spatial extent at geom resolution (km), see Details. 
 #' @param np      Number of photons to trace, [0,Inf).
@@ -113,10 +113,13 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
 
     if(geom == "annular") {
       geom <- 1
-    } else if(geom == "grid") {
+    } else if(geom == "sectorial") {
       geom <- 2
+    } else if(geom == "grid") {
+      geom <- 3
     } else {
-      stop("geom must be 'annular' or 'grid', see Details.", call. = FALSE)
+      stop("geom must be 'annular', 'sectorial' or 'grid', see Details.", 
+        call. = FALSE)
     }
 
     psf <- .Call("C_mc_psf", atm, geom, res, ext, snspos, snsfov, snsznt, 
@@ -124,7 +127,21 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
 
     names(psf) <- c("bin_phtw", "dirtw", "bin_brks", "bin_mid")
 
+    # Averaging along axis of symmetry to reduce effect of statistical 
+    # fluctuations:
     if(geom == 2) {
+
+      psf$bin_phtw <- matrix(psf$bin_phtw, ncol = length(psf$bin_mid))
+
+      nd  <- nrow(psf$bin_phtw)
+      ndh <- nd / 2 
+
+      psf$bin_phtw[1:ndh, ] <- (psf$bin_phtw[1:ndh,] + 
+                               psf$bin_phtw[nd:(ndh+1),]) / 2
+      psf$bin_phtw[nd:(ndh+1), ] <- psf$bin_phtw[1:ndh, ]
+    }
+
+    if(geom == 3) {
 
       psf$bin_phtw <- matrix(psf$bin_phtw, ncol = length(psf$bin_mid))
 

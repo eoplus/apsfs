@@ -22,7 +22,7 @@ mc_psf(
 \arguments{
 \item{atm}{Atmosphere model, see Details.}
 
-\item{geom}{One of "annular" or "grid", see Details.}
+\item{geom}{One of "annular", "sectorial" or "grid", see Details.}
 
 \item{res}{Resolution (km), [0,10]. See Details.}
 
