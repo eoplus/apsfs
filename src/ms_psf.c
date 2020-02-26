@@ -359,6 +359,16 @@ SEXP C_mc_psf(SEXP atm,
 
   if(geomi == 2) {
 
+    for(i = 0; i < ((n_brks - 1) * 360); i++) {
+
+      bin_phtw[i] /= (double) Rf_asInteger(np);
+
+    }
+
+  }
+
+  if(geomi == 3) {
+
     for(i = 0; i < ((n_brks - 1) * (n_brks - 1)); i++) {
 
       bin_phtw[i] /= (double) Rf_asInteger(np);
@@ -385,6 +395,10 @@ SEXP C_mc_psf(SEXP atm,
     bin_phtw_sxp = Rf_protect(Rf_allocVector(REALSXP, n_brks - 1));
 
   } else if(geomi == 2) {
+
+    bin_phtw_sxp = Rf_protect(Rf_allocVector(REALSXP, (n_brks - 1) * 360));
+
+  } else if(geomi == 3) {
 
     bin_phtw_sxp = Rf_protect(Rf_allocVector(REALSXP, (n_brks - 1) * (n_brks - 1)));
 
@@ -611,13 +625,15 @@ void accm_sectorial (struct str_phtpkg pht,
 
   rpht = sqrt(pow(pht.cpos[0], 2.0) + pow(pht.cpos[1], 2.0));
   azmt = acos(pht.cpos[1] / rpht);
-  if(pht.cpos[1] > 0.0) {
+  if(pht.cpos[0] > 0.0) {
     azmt = (2.0 * M_PI) - azmt;
   }
 
   rid = findInterv(rpht, bin_brks, n);
   aid = (int) floor(azmt * 180.0 / M_PI);
   id  = (n - 1) * aid + rid;
+
+//printf("n: %d, rid: %d, aid: %d, azmt = %f, x = %f, y = %f\n", n, rid, aid, azmt * 180.0 / M_PI, pht.cpos[0], pht.cpos[1]);
 
   bin_phtw[id] += pht.stks[0];
 

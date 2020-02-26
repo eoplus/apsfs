@@ -46,14 +46,18 @@
 #' surface or if it escaped the system. If it reached the surface, its intensity
 #' ("photon package weight") is added to the appropriate accumulator bin. The 
 #' accumulator geometry can be: (1) 'annular', which only keep track of the 
-#' annular bin in which the photon reached the surface; or (2) 'grid', which 
+#' annular bin in which the photon reached the surface; (2) 'sectorial', wich 
+#' divide the annuli in sectors for azimuthal assymetry; or (3) 'grid', which 
 #' will keep track of the {x,y} position. The 'annular' accumulator is 
 #' appropriate for symmetrical conditions, as nadir view over a Lambertian 
 #' surface. Note that regardless of extent of the accumulator, a final bin will 
 #' be added between ext and Inf. The resolution of the accumulator will have an
 #' impact on the performance, as too high resolution, specially in 'grid' 
 #' geometry will require more photons to be traced to reduce statistical 
-#' sampling variation.
+#' sampling variation. Note that when using 'sectorial' geometry, angular 
+#' resolution in azimuth is fixed to 1 degree and break points returned by the 
+#' function refer only to the radius break points (angular break points will be
+#' 0:360 always).
 #'
 #' The reduced performance with high resolution grid and the need for high 
 #' resolution close to the target pixel while low resolution is sufficient for 
@@ -62,9 +66,9 @@
 #' fit to the density PSF. This model can then be used to generate a discrete 
 #' PSF kernel at any sensor resolution.
 #'
-#' To reduce the random sampling fluctuation in the grid geometry, the grid is 
-#' 'folded' in its axis of symmetry (sensor azimuth line), averaged and then 
-#' 'unfolded'.
+#' To reduce the random sampling fluctuation in the sectorial and grid 
+#' geometries, the grid is 'folded' on its axis of symmetry (sensor azimuth 
+#' line), averaged and then 'unfolded'.
 #'
 #' Note that the returned values are fractional contribution per accumulation 
 #' bin (integrals), and so are not normalized per area. Conversion to per area
@@ -131,14 +135,14 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
     # fluctuations:
     if(geom == 2) {
 
-      psf$bin_phtw <- matrix(psf$bin_phtw, ncol = length(psf$bin_mid))
+      psf$bin_phtw <- matrix(psf$bin_phtw, nrow = length(psf$bin_mid))
 
-      nd  <- nrow(psf$bin_phtw)
+      nd  <- ncol(psf$bin_phtw)
       ndh <- nd / 2 
 
-      psf$bin_phtw[1:ndh, ] <- (psf$bin_phtw[1:ndh,] + 
-                               psf$bin_phtw[nd:(ndh+1),]) / 2
-      psf$bin_phtw[nd:(ndh+1), ] <- psf$bin_phtw[1:ndh, ]
+      psf$bin_phtw[, 1:ndh] <- (psf$bin_phtw[, 1:ndh] + 
+                                psf$bin_phtw[, nd:(ndh+1)]) / 2
+      psf$bin_phtw[, nd:(ndh+1)] <- psf$bin_phtw[, 1:ndh]
     }
 
     if(geom == 3) {
@@ -161,7 +165,7 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
       snspos  = snspos, 
       snsfov  = snsfov, 
       snsznt  = snsznt, 
-      geom    = ifelse(geom == 1, "annular", "grid"),
+      geom    = switch(geom, "annular", "sectorial", "grid"),
       res     = res, 
       ext     = ext, 
       np      = np, 
@@ -344,7 +348,15 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
   dirtw    <- dirtw / np
   bin_phtw <- bin_phtw / np
 
-  # Fold the grid to average and reduce noise:
+  # Fold the sectors and grids to average and reduce noise:
+  if(geom == 'sectorial') {
+   nd  <- ncol(bin_phtw)
+   ndh <- nd / 2 
+
+   bin_phtw[, 1:ndh] <- (bin_phtw[, 1:ndh] + bin_phtw[, nd:(ndh+2)]) / 2
+   bin_phtw[, nd:(ndh+2)] <- bin_phtw[, 1:ndh]
+  }
+
   if(geom == 'grid') {
    nd  <- nrow(bin_phtw)
    ndh <- (nd - 1) / 2 
