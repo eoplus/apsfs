@@ -130,7 +130,7 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
       as.integer(np), mnw, cdf_aer, cdf_ray)
 
     names(psf) <- c("bin_phtw", "dirtw", "bin_brks", "bin_mid")
-#print("GOT BACK!\n")
+
     # Averaging along axis of symmetry to reduce effect of statistical 
     # fluctuations:
     if(geom == 2) {

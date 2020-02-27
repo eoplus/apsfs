@@ -171,10 +171,6 @@ SEXP C_mc_psf(SEXP atm,
     bin_brks[0] = 0;
     bin_brks[1] = resi / 2;
     bin_brks[n_brks - 1] = INFINITY;
-
-//printf("Extent is: %f\n", exti);
-//printf("Resolution is: %f\n", resi);
-//printf("Breaks length is: %d\n", n_brks);
     
     for(i = 2; i < n_brks - 1; i++) {
 
