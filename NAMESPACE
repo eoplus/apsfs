@@ -2,6 +2,7 @@
 
 export(calc_cdf)
 export(cos2sph)
+export(cum_psf)
 export(dpsf)
 export(fit_annular_psf)
 export(get_mol_par)

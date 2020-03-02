@@ -150,14 +150,14 @@ get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z,
   
   tau_atm_prfl <- data.frame(km     = brk_z,                                    # Metric distance break points
                              tau    = tau_atm_prfl,                             # Optical distance break points
-                             tau_u  = c(tau_atm_prfl[-length(brk_z)], NA),      # tau at upper boundary of the layer
-                             tau_d  = c(tau_atm_prfl[-1], NA),                  # tau at lower boundary of the layer
-                             dkm    = c(abs(diff(brk_z)), NA),                  # delta km of the layer
-                             dtau   = c(abs(diff(tau_atm_prfl)), NA),           # delta tau of the layer
+#                             tau_u  = c(tau_atm_prfl[-length(brk_z)], NA),      # tau at upper boundary of the layer
+#                             tau_d  = c(tau_atm_prfl[-1], NA),                  # tau at lower boundary of the layer
+#                             dkm    = c(abs(diff(brk_z)), NA),                  # delta km of the layer
+#                             dtau   = c(abs(diff(tau_atm_prfl)), NA),           # delta tau of the layer
                              w0_tot = c(w0_atm_z, NA),                          # average single scattering albedo of the layer
                              b_ray  = c(b_ray_z, NA),                           # average Rayleigh scattering coefficient of the layer
                              b_aer  = c(b_aer_z, NA),                           # average Aerosol scattering coefficient of the layer
-                             b_tot  = c(b_ray_z + b_aer_z, NA),                 # average total scattering coefficient of the layer
+#                             b_tot  = c(b_ray_z + b_aer_z, NA),                 # average total scattering coefficient of the layer
                              c_tot  = c(c_atm_z, NA))                           # average total attenuation coefficient of the layer
 
   return(tau_atm_prfl)

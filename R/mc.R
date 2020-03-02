@@ -106,6 +106,20 @@
 mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw, 
   cdf_aer, cdf_ray, Rmc = FALSE) {
 
+  ain <- atm
+  atm <- data.frame(km     = atm$km,
+                    tau    = atm$tau,
+                    tau_u  = c(atm$tau[-length(atm$tau)], NA),
+                    tau_d  = c(atm$tau[-1], NA),
+                    dkm    = c(abs(diff(atm$km)), NA),
+                    dtau   = c(abs(diff(atm$tau)), NA),
+                    w0_tot = atm$w0_tot,
+                    b_ray  = atm$b_ray,
+                    b_aer  = atm$b_aer,
+                    b_tot  = atm$b_ray + atm$b_aer,
+                    c_tot  = atm$c_tot
+  )
+
   if(Rmc) {
 
     psf <- .Rmc_psf(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw, 
@@ -159,8 +173,10 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
        psf$bin_phtw[nd:(ndh+2),] <- psf$bin_phtw[1:ndh,]
     }
 
+
+
     psf$metadata <- list(
-      atm     = atm,
+      atm     = ain,
       cdf_aer = cdf_aer, 
       snspos  = snspos, 
       snsfov  = snsfov, 
