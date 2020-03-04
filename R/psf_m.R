@@ -377,7 +377,7 @@ predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0,
   yvec <- xvec
   xy   <- expand.grid(xvec, yvec)
   r    <- sqrt(apply(xy^2, 1, sum))
-  rm   <- matrix(r, ncol = length(xvec)) / 1000 # m to Km conversion
+  rm   <- matrix(r, ncol = length(xvec))
 
   # Calculate the per area weight function at the pixel vertices and calculate
   # the trapezoidal average for each pixel and the weight per pixel given its 
@@ -386,12 +386,12 @@ predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0,
   wm   <- grad(fun_grad, x = rm, press = press) / 2 / pi / rm
   wm   <- wm[-1, ] + wm[-nrow(wm), ]
   wm   <- wm[, -1] + wm[, -ncol(wm)]
-  wm   <- (res / 1000)^2 * wm / 4
+  wm   <- (res)^2 * wm / 4
   
   # The weight at the center pixel (target pixel) is more correctly calculated 
   # by evaluating the cumulative function at an r of a circle with equivalent 
   # area.
-  rgt <- sqrt((res / 1000)^2 / pi)
+  rgt <- sqrt(res^2 / pi)
   # id  <- (ncol(wm) + 1) / 2
   # wm[id, id] <- fun_grad(rgt, press = press)
   id <- which(wm == max(wm, na.rm = T))
