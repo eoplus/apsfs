@@ -4,41 +4,66 @@
 #' Calculates a Look Up Table (LUT) for the aersol cumulative distribution 
 #' function to be used with the Monte Carlo calculations.
 #'
-#' @param ph   Phase function table at single wavelength.
-#' @param xout Angle points for calculation. 
-#' @param type One of "fixed", "dynamic". See Details.
+#' @param ph     Phase function table at single wavelength.
+#' @param xout   Angle points for calculation.  See Details.
+#' @param method One of "fixed", "adaptative". See Details.
 #'
-#' @details This function calculates the cumulative density function of aerosol 
-#' phase functions. It can use a fixed integration grid based on xout (must be 
-#' very fine resolution!) or an adaptive integration (any xout). Note that the 
-#' convention in atmospheric optics is to have the PF not normalized by 4pi 
-#' steradian, so it is unitless instead of 1/sr as in ocean optics. The integral 
-#' to 1 is:
-#' integral_0^2pi integral_0^pi (PF(theta) / 4pi) * sin(theta) * dtheta * dphi = 1
-#' such that:
-#' integral_0^pi PF(theta) / 2 * sin(theta) * dtheta = 1
+#' @details This function calculates the cumulative distribution function of 
+#' aerosol phase functions between 0 and pi. It can use a fixed integration grid 
+#' based on xout (must be fine angular grid resolution!) or an adaptive 
+#' integration (any xout) based on \code{integrate}. Regardless of the method 
+#' used, a fine resolution is recommended to reduce bias on the PSF simulation. 
+#' If xout is not specified, the defaault is to use 1000 log10 spaced values 
+#' between 0 and pi. If xout is provided, it must include 0 and pi.
+#'
+#' For the integration, a linear interpolation (\code{approx}) is used in log10
+#' space for the aerosol phase function. Method 'fixed' uses fixed integration 
+#' steps with quadrature rule.
+#'
+#' Note that the convention in atmospheric optics is to have the PF not 
+#' normalized by 4pi steradian, so it is unitless instead of 1/sr as in ocean 
+#' optics. The integral to 1 is:
+#'
+#' integral_0^2pi integral_0^pi (PF(theta, phi) / 4pi) * sin(theta) * dtheta * dphi = 1,
+#'
+#' which in isotropic conditions (lack of azimuthal dependence) simplified to:
+#'
+#' integral_0^pi (PF(theta) / 2) * sin(theta) * dtheta = 1
 #'
 #' Due to small numerical errors, the phase functions are renormalized to 1 
 #' before returning.
 #'
+#' @return A numeric vector with the aerosol scattering CDF.
+#'
 #' @examples
-#' psi_out <- c(0, 10^seq(log10(0.00001), log10(180), length.out = 1000))
-#' calc_cdf(continental_ph_6sv[, c(1, 8)], psi_out)
+#' cdf_lut(continental_ph_6sv[, c(1, 8)])
 #'
 #' @export
 
-calc_cdf <- function(ph, xout, type = "fixed") {
+cdf_lut <- function(ph, xout, method = "fixed") {
 
-  if(type == "fixed") {
+  if(missing(xout)) {
+    xout <- c(0, 10^seq(log10(1E-5), log10(180), length.out = 1E3)) * pi / 180
+  } else {
+    if(min(xout) != 0 | max(xout) != pi)
+      stop("CDF limits should include 0 and pi")
+    if(length(xout) < 1E3 & method == "fixed")
+      paste("Fixed integration uncertainties will be larger for lower angular",
+      "resolution. 1000 log10 spaced intervals is recommended.") %>%
+      warning(call. = FALSE)
+  }
+
+  if(method == "fixed") {
 
     ph <- approx(x = ph[, 1], y = log10(ph[, 2] / 4 / pi), xout = xout) %>%
           as.data.frame()
-    ph[, 1] <- ph[, 1] * pi / 180
     ph[, 2] <- 10^ph[, 2]
-    tp <- 2 * pi * ph[, 2] * sin(ph[, 1]) 
-    tp <- (tp[-1] + tp[-length(tp)]) / 2 # trapezoidal rule
-    tp <- diff(ph[, 1]) * tp
-    ph[, 3] <- c(0, cumsum(tp))
+    tmp     <- 2 * pi * ph[, 2] * sin(ph[, 1]) 
+    tmp     <- (tmp[-1] + tmp[-length(tmp)]) / 2 # trapezoidal rule
+    tmp     <- diff(ph[, 1]) * tmp
+    ph$cdf  <- c(0, cumsum(tmp))
+
+    # Renormalize to remove effects of numerical approximations:
     ph[, 2] <- ph[, 2] / ph[nrow(ph), 3]
     ph[, 3] <- ph[, 3] / ph[nrow(ph), 3]
 
@@ -46,21 +71,14 @@ calc_cdf <- function(ph, xout, type = "fixed") {
 
   } else {
 
-    ph[, 1] <- ph[, 1] * pi / 180
-    xout    <- xout * pi / 180 
-
     f <- function(x) {
-
       10^approx(x = ph[, 1], y = log10(ph[, 2] / 4 / pi), xout = x)$y * sin(x)
-
     }
 
     cdf <- numeric(length(xout))
 
     for(i in 2:length(xout)) {
-
       cdf[i] <-  2 * pi * integrate(f, lower = 0, upper = xout[i])$value
-
     }
 
     cdf <- cdf / cdf[length(xout)]
@@ -173,3 +191,4 @@ rayleigh_od <- function(atm, lambda, co2 = 400, lat = 45) {
  return(tau_ray)
 
 }
+
