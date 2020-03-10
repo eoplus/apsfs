@@ -1,17 +1,19 @@
-#' US62 Standard Atmosphere
+#' US76 Standard Atmosphere
 #'
-#' A dataset containing model profiles of temperature, pressure, water vapor and
-#' ozone concentration.
+#' A dataset containing model profiles of temperature, pressure, and density of 
+#' air from -1 km to 1000 km.
 #'
-#' @format A data frame with 34 rows and 5 variables:
+#' @format A data frame with 603 rows and 4 variables:
 #' \describe{
-#'   \item{Z}{Height from surface (km)}
+#'   \item{Z}{Geometric height from surface (km)}
+#'   \item{Temperature}{Temperature (degree K)}
 #'   \item{Pressure}{Pressure (mbar)}
-#'   ...
+#'   \item{Density}{Air density (kg / m3)}
 #' }
-#' @source 6SV code \url{http://6s.ltdri.org/}
+#' @source Generated with the Public Domain Aeronautical Software (PDAS) code 
+#' atmos76.f90 \url{http://www.pdas.com/atmosdownload.html}
 
-"us62"
+"us76"
 
 #' 6SV Standard Aerosol Phase Functions
 #'
