@@ -3,6 +3,8 @@
 \docType{data}
 \name{continental_coef_6sv}
 \alias{continental_coef_6sv}
+\alias{maritime_coef_6sv}
+\alias{urban_coef_6sv}
 \title{6SV Standard Aerosol Coefficients}
 \format{A data frame with 20 rows and 7 variables, the first being the 
 wavelength reference (nm) and optical coefficients:
@@ -16,6 +18,10 @@ wavelength reference (nm) and optical coefficients:
 }
 \usage{
 continental_coef_6sv
+
+maritime_coef_6sv
+
+urban_coef_6sv
 }
 \description{
 A dataset containing the optical coefficients of three standard 

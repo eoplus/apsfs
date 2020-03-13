@@ -34,7 +34,7 @@ points of atm.}
 \value{
 A data.frame with the average optical properties per layer. Note that 
 the first two columns are the the break points of the atmosphere layers in 
-tau and Km. So the last row will always be NA for all average properties,
+km and optical depth. So the last row will always be NA for all average properties,
 since the last atmosphere layer is nrow - 1.
 }
 \description{
@@ -57,4 +57,13 @@ Pseudo-code:
 7 - Calculate the average molecular absorption per layer.
 8 - Calculate the average extinction per layer and single scattering albedo.
 9 - Sum the total optical depth from TOA per layer.
+}
+\examples{
+
+data(us76)
+tau_ray_z <- rayleigh_od(atm = us76, lambda = 550, co2 = 400, lat = 45)
+a_mol_z   <- rep(0, nrow(us76))
+get_opt_atm_prfl(atm = us62, tau_aer = 0.5, H_aer = 2, w0_aer = 0.89, 
+  tau_ray_z = tau_ray_z, a_mol_z = a_mol_z)
+
 }

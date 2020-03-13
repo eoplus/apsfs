@@ -61,3 +61,32 @@
 #' @docType package
 #' @name apsfs-package
 NULL
+
+
+
+is.psf  <- function(x) {
+  inherits(x, "psf")
+}
+
+print.psf <- function(x, digits = 3) {
+  dir <- x$dirtw 
+  dif <- sum(x$bin_phtw)
+  tot <- dir + dif
+  txt <- c(
+    " Atmospheric Point Spread Function\n",
+    paste0(),
+    paste0("Geometry: ", x$metadata$geom, "\n"),
+    paste0("Extent: ", round(x$metadata$ext, digits), " km\n"),
+    paste0("Resolution: ", round(x$metadata$res, digits), " km\n"),
+    paste0("Altitude: ", round(x$metadata$snspos[3], digits), " km\n"),
+    paste0("Pressure(0): ", round(x$metadata$press, digits), " mbar\n"),
+    paste0("View angle: ", round(x$metadata$snsznt * 180 / pi, digits), " degrees\n"),
+    paste0("FOV:  ", round(x$metadata$snsfov * 180 / pi, digits), " degrees\n"),
+    paste0("Tdir: ", round(dir, digits), " (", round(100 * dir / tot, digits = 1), " %)\n"),
+    paste0("Tdif: ", round(dif, digits), " (", round(100 * dif / tot, digits = 1), " %)\n"),
+    paste0("Ttot: ", round(tot, digits), " (", round(100 * tot / tot, digits = 0), " %)\n")
+  )
+  cat(txt)
+}
+
+

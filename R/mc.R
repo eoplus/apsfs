@@ -16,6 +16,8 @@
 #' @param np      Number of photons to trace, [0,Inf).
 #' @param mnw     Minimal weight to keep tracing photon package (unitless), 
 #'                [0,1].
+#' @param press   Atmospheric pressure at surface (mbar). Can be omitted if 
+#'                present on the attributes of atm. See Details.
 #' @param Rmc     Logical. Should the R version of the MC code be used? Defaults
 #'                to FALSE. See Details.
 #'
@@ -30,7 +32,10 @@
 #' multiple interaction between surface and atmosphere are not included.
 #'
 #' The atmosphere profile atm should be a named data frame as the one created by 
-#' function \code{get_opt_atm_prfl}.
+#' function \code{get_opt_atm_prfl}. If the profile is create manually or with 
+#' user functions, it must contain at least the same variables and column names.
+#' It may also include pressure in the attributes (attr(atm, "press") <- value),
+#' and in this case the parameter press can be omitted.
 #'
 #' The initial direction of the photon package is sampled assuming equal 
 #' sensibility of the sensor to all directions within its FOV. As an example, 
@@ -86,25 +91,33 @@
 #' bins, 'bin_mid' with the mid point of the bins and 'metadata' containing the 
 #' input parameters.
 #'
-#' @example
-#' atm <- rayleigh_od(us62, lambda = 550) %>%
-#'        get_opt_atm_prfl(atm = us62, tau_aer = 0.5, H_aer = 2, w0_aer = 0.89, 
-#'          tau_ray_z = ., a_mol_z = rep(0, nrow(us62)))
-#' psi_out <- c(0, 10^seq(log10(0.00001), log10(180), length.out = 1000))
-#' cdf_aer <- calc_cdf(continental_ph_6sv[, c(1, 8)], psi_out)
-#' psf_int <- mc_psf(atm = atm, cdf_aer = cdf_aer, snspos  = c(0, 0, 800), 
-#'   snsfov = 0, snsznt = 0, geom = 'annular', res = 0.03, ext = 10, np = 1E5, 
-#'   mnw = 1E-6)
+#' @examples
+#' # Using the C version of the code:
+#' data(us76)
+#' atm <- rayleigh_od(us76, lambda = 550) %>%
+#'        get_opt_atm_prfl(atm = us76, tau_aer = 0.5, H_aer = 2, w0_aer = 0.89, 
+#'          tau_ray_z = ., a_mol_z = rep(0, nrow(us76)))
+#' cdf_aer <- cdf_lut(continental_ph_6sv[, c(1, 8)])
+#' psf_int <- mc_psf(atm     = atm, 
+#'                   geom    = 'annular', 
+#'                   res     = 0.03, 
+#'                   ext     = 10, 
+#'                   snspos  = c(0, 0, 800), 
+#'                   snsfov  = 0, 
+#'                   snsznt  = 0, 
+#'                   np      = 1E5, 
+#'                   mnw     = 1E-6,
+#'                   cdf_aer = cdf_aer)
 #' par(mar = c(5, 6, 3, 2))
-#' x <- psf_int$bin_mid
-#' plot(x[-length(x)], psf_int$bin_phtw[-length(x)], xlab = "Radius (km)", ylab =
-#'   expression(2*pi*integral("r'"*f("r'")*d*"r'", 0, r)))
+#' x <- psf_int$bin_brks
+#' plot(x, cum_psf(psf_int), xaxs = "i",  yaxs = "i", xlab = "Radius (km)", 
+#' ylab = expression(2*pi*integral("r'"*f("r'")*d*"r'", 0, r)), xlim = c(0, 10))
 #'
 #' @useDynLib apsfs C_mc_psf
 #' @export
 
 mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw, 
-  cdf_aer, cdf_ray, Rmc = FALSE) {
+  cdf_aer, cdf_ray = NULL, press = NULL, Rmc = FALSE) {
 
   ain <- atm
   atm <- data.frame(km     = atm$km,
@@ -120,15 +133,25 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
                     c_tot  = atm$c_tot
   )
 
-  if(Rmc) {
+  if(is.null(cdf_ray)) {
+    cdf_ray <- rayleigh_cdf
+  }
 
+  # Check pressure information. It is not necessary on the MC code per se, but 
+  # it has to be included on the metadata of the PSF object for further 
+  # processing.
+  if(is.null(press)) {
+    press <- attr(ain, "press")
+    if(is.null(press)) {
+      "Pressure mst be defined in press is not present as an attribute of atm" %>%
+      stop(call. = FALSE)
+    }
+  }
+
+  if(Rmc) {
     psf <- .Rmc_psf(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw, 
       cdf_aer)
-
-    return(psf)
-
   } else {
-
     if(geom == "annular") {
       geom <- 1
     } else if(geom == "sectorial") {
@@ -148,7 +171,6 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
     # Averaging along axis of symmetry to reduce effect of statistical 
     # fluctuations:
     if(geom == 2) {
-
       psf$bin_phtw <- matrix(psf$bin_phtw, nrow = length(psf$bin_mid))
 
       nd  <- ncol(psf$bin_phtw)
@@ -160,7 +182,6 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
     }
 
     if(geom == 3) {
-
       psf$bin_phtw <- matrix(psf$bin_phtw, ncol = length(psf$bin_mid))
 
        # Averaging along axis of symmetry to reduce effect of statistical 
@@ -173,25 +194,27 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
        psf$bin_phtw[nd:(ndh+2),] <- psf$bin_phtw[1:ndh,]
     }
 
-
-
-    psf$metadata <- list(
-      atm     = ain,
-      cdf_aer = cdf_aer, 
-      snspos  = snspos, 
-      snsfov  = snsfov, 
-      snsznt  = snsznt, 
-      geom    = switch(geom, "annular", "sectorial", "grid"),
-      res     = res, 
-      ext     = ext, 
-      np      = np, 
-      mnw     = mnw
-    )
-
-    return(psf)
-
+    geom <- switch(geom, "annular", "sectorial", "grid")
   }
 
+  psf$metadata <- list(
+    press   = press,
+    atm     = ain,
+    cdf_aer = cdf_aer, 
+    snspos  = snspos, 
+    snsfov  = snsfov, 
+    snsznt  = snsznt, 
+    geom    = geom,
+    res     = res, 
+    ext     = ext, 
+    np      = np, 
+    mnw     = mnw,
+    aer     = ifelse(sum(ain))
+  )
+
+  class(psf) <- c("psf", class(psf))
+
+  psf
 }
 
 # R version of the MC code. It will be many times slower...
@@ -386,26 +409,13 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
     bin_phtw  = bin_phtw,
     dirtw     = dirtw,
     bin_brks  = bin_brks,
-    bin_mid   = (bin_brks[-1] + bin_brks[-length(bin_brks)]) / 2,
-    metadata  = list(
-      atm     = atm,
-      cdf_aer = cdf_aer, 
-      snspos  = snspos, 
-      snsfov  = snsfov, 
-      snsznt  = snsznt, 
-      geom    = geom,
-      res     = res, 
-      ext     = ext, 
-      np      = np, 
-      mnw     = mnw
-    )
+    bin_mid   = (bin_brks[-1] + bin_brks[-length(bin_brks)]) / 2
   )
 
   setTxtProgressBar(pb, 10)
   close(pb)
 
-  return(psf)
-
+  psf
 }
 
 #' Ancillary function to move photon in stratified atmosphere:

@@ -58,13 +58,16 @@ get_mol_par <- function(atm, lambda) {
 #'
 #' @return A data.frame with the average optical properties per layer. Note that 
 #' the first two columns are the the break points of the atmosphere layers in 
-#' tau and Km. So the last row will always be NA for all average properties,
+#' km and optical depth. So the last row will always be NA for all average properties,
 #' since the last atmosphere layer is nrow - 1.
 #'
-#' @example
-#' tau_ray_z <- rayleigh_od(atm = us62, lambda = 550, co2 = 400, lat = 45)
-#' get_opt_atm_prfl(atm = us62, tau_aer = 0.05, H_aer = 2, w0_aer = 0.89, 
-#'   tau_ray_z = tau_ray_z, a_mol_z = rep(0, nrow(us62)))
+#' @examples
+#'
+#' data(us76)
+#' tau_ray_z <- rayleigh_od(atm = us76, lambda = 550, co2 = 400, lat = 45)
+#' a_mol_z   <- rep(0, nrow(us76))
+#' get_opt_atm_prfl(atm = us62, tau_aer = 0.5, H_aer = 2, w0_aer = 0.89, 
+#'   tau_ray_z = tau_ray_z, a_mol_z = a_mol_z)
 #'
 #' @export
 
@@ -80,17 +83,13 @@ get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z,
   c_aer_0 <- tau_aer / H_aer
 
   tau_aer_fun <- function(x) {
-
     c_aer_0 * exp(-x / H_aer)
-
   }
 
   tau_aer_z <- numeric(length(brk_z))
 
   for(i in 1:length(brk_z)) {
-
     tau_aer_z[i] <- integrate(tau_aer_fun, lower = brk_z[i], upper = Inf)$value
-
   }
 
   tau_aer_z[length(tau_aer_z)] <- tau_aer
@@ -100,14 +99,7 @@ get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z,
   b_aer_z <- c_aer_z * w0_aer
   a_aer_z <- c_aer_z * (1 - w0_aer)
 
-#  Removed:
-#  # Use pressure profile to create Rayleigh extinction integral from TOA to 
-#  # surface:
-#  p0        <- max(atm$Pressure)
-#  p         <- spline(x = atm$Z, y = atm$Pressure, xout = brk_z)$y
-#  tau_ray_z <- tau_ray * p / p0
-
-  # Interpolate the Rayleigh optical depth:
+  # Interpolate Rayleigh optical depth:
   if(all(tau_ray_z == 0)) {
     tau_ray_z <- rep(0, length(brk_z))
   } else {
@@ -121,19 +113,14 @@ get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z,
   tau_mol_z <- numeric(length(brk_z))
 
   if(sum(a_mol_z) != 0) {
-
     tau_mol_fun <- function(x) {
-
       10^approx(x = us62$Z, y = log10(a_mol_z), xout = x)$y
-
     }
 
     for(i in 2:length(brk_z)) {
-
       xout <- seq(brk_z[i], max(brk_z), length.out = (max(brk_z) - brk_z[i]))
       tp   <- tau_mol_fun(xout)
       tau_mol_z[i] <- sum(diff(xout) * (tp[-1] + tp[-length(tp)]) / 2)
-
     }
 
   }
@@ -150,17 +137,12 @@ get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z,
   
   tau_atm_prfl <- data.frame(km     = brk_z,                                    # Metric distance break points
                              tau    = tau_atm_prfl,                             # Optical distance break points
-#                             tau_u  = c(tau_atm_prfl[-length(brk_z)], NA),      # tau at upper boundary of the layer
-#                             tau_d  = c(tau_atm_prfl[-1], NA),                  # tau at lower boundary of the layer
-#                             dkm    = c(abs(diff(brk_z)), NA),                  # delta km of the layer
-#                             dtau   = c(abs(diff(tau_atm_prfl)), NA),           # delta tau of the layer
                              w0_tot = c(w0_atm_z, NA),                          # average single scattering albedo of the layer
                              b_ray  = c(b_ray_z, NA),                           # average Rayleigh scattering coefficient of the layer
                              b_aer  = c(b_aer_z, NA),                           # average Aerosol scattering coefficient of the layer
-#                             b_tot  = c(b_ray_z + b_aer_z, NA),                 # average total scattering coefficient of the layer
                              c_tot  = c(c_atm_z, NA))                           # average total attenuation coefficient of the layer
 
-  return(tau_atm_prfl)
-
+  attr(tau_atm_prfl, "press") <- max(atm$Pressure)
+  tau_atm_prfl
 }
 

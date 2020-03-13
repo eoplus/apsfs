@@ -73,7 +73,7 @@ SEXP C_mc_psf(SEXP atm,
   R_xlen_t atm_n;
 
   // Variable declaration:
-  int    geomi, n_brks, i, sid, clid, n, n_aer, n_ray, scid;
+  int    geomi, n_brks, i, sid, clid, n, n_aer, n_ray;
   double dirtw, exti, resi, sod, tau_tot, snshfov, phi_s, km_max, PI2, phi, psi;
   double sint, s, mnwi, ru, bs, b_rat;
   double snsposi[3], snscdir[3], cdir[3], sdir[2];
@@ -205,8 +205,10 @@ SEXP C_mc_psf(SEXP atm,
   }
   // Set variables to reduce repetitive calculations:
   sid     = findInterv(snsposi[2], (double*) REAL(km_in), (int) atm_n);
-  sod =   REAL(tau_u)[sid] + REAL(dtau)[sid] * (REAL(km_in)[sid] - snsposi[2]) / REAL(dkm)[sid];
-  sid     = findInterv(sod, (double*) REAL(tau), (int) atm_n);
+  sod     = REAL(tau_u)[sid] + REAL(dtau)[sid] * (REAL(km_in)[sid] - snsposi[2]) / REAL(dkm)[sid];
+//  The following is giving some error that I cannot understand where for some 
+//  altitudes, it will not find teh correct sid...
+//  sid     = findInterv(sod, (double*) REAL(tau), (int) atm_n);
   tau_tot = REAL(tau)[atm_n - 1];
   snshfov = Rf_asReal(snsfov) / 2.0;
   PI2     = 2.0 * M_PI;
@@ -243,7 +245,7 @@ SEXP C_mc_psf(SEXP atm,
     } else {
 
       phi = gsl_rng_uniform (random) * PI2;
-      psi = gsl_rng_uniform (random) * Rf_asReal(snsfov);
+      psi = gsl_rng_uniform (random) * snshfov;
 
       if(Rf_asReal(snsznt) != 0) {
 
@@ -439,7 +441,7 @@ void update_cdir (double psi,
   double sint = sin(acos(cdir[2]));
   double sins = sin(psi);
   double scatmb[3] = {0.0};
-  double scatma[3][3] = {0.0};
+  double scatma[3][3] = {{0.0}, {0.0}, {0.0}};
 
   scatmb[0] = sins * cos(phi);
   scatmb[1] = sins * sin(phi);

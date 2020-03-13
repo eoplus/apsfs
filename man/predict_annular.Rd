@@ -9,7 +9,7 @@ predict_annular(r, fit, type = c("psf", "dpsf", "cumpsf"), press = NULL)
 \arguments{
 \item{r}{The radius distances (km) at which the model should be evaluated.}
 
-\item{fit}{A model fit from \code{fit_annular_psf}.}
+\item{fit}{A model fit from \code{fit_annular}.}
 
 \item{type}{Type of prediction: 'psf', 'dpsf', or 'cumpsf'. See Details.}
 
@@ -19,7 +19,7 @@ predict_annular(r, fit, type = c("psf", "dpsf", "cumpsf"), press = NULL)
 A numeric vetor with the PSF, dPSF/dArea or cumulative PSF.
 }
 \description{
-Solves a fitted model from \code{fit_annular_psf} for the PSF of the radial 
+Solves a fitted model from \code{fit_annular} for the PSF of the radial 
 cummulative PSF at requested radius.
 }
 \details{

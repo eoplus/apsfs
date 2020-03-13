@@ -26,7 +26,13 @@
 #' @source 6SV code \url{http://6s.ltdri.org/}
 
 "continental_ph_6sv"
+
+#' @rdname continental_ph_6sv
+ 
 "maritime_ph_6sv"
+
+#' @rdname continental_ph_6sv 
+
 "urban_ph_6sv"
 
 #' 6SV Standard Aerosol Coefficients
@@ -45,21 +51,14 @@
 #' @source 6SV code \url{http://6s.ltdri.org/}
 
 "continental_coef_6sv"
+
+#' @rdname continental_coef_6sv 
+
 "maritime_coef_6sv"
+
+#' @rdname continental_coef_6sv
+
 "urban_coef_6sv"
-
-#' 6SV Rayleigh Optical Thickness Coefficients at surface pressure
-#'
-#' A dataset containing the optical thickness of Rayleigh scattering at selected
-#' wavelengths of the 6SV aerosol data grid. The surface pressure is 1013.25 
-#' mbar.
-#'
-#' @format A data frame with 20 rows and 2 variables, the first being the 
-#' wavelength reference (nm) and the second the optical thickness.
-#'
-#' @source 6SV code \url{http://6s.ltdri.org/}
-
-"tau_ray_6sv"
 
 #' Rayleigh Cumulative Distribution Function
 #'
@@ -71,4 +70,60 @@
 #' @source 6SV code \url{http://6s.ltdri.org/}
 
 "rayleigh_cdf"
+
+#' Fitted annular simulations
+#'
+#' Contains the fitted coefficients of the atmospheric point spread functions
+#' (APSFs) simulated for the different standard aerosol models of the 6SV 
+#' radiative transfer code: maritime (mar), continental (con) and urban (urb). 
+#' Simulations were carried out without Rayleigh contribution, and with an 
+#' aerosol scale height of 2 km. The APSF for Rayleigh alone (ray) is also 
+#' available. Sensor was positioned at TOA, with nadir view angle and 
+#' infinitesimal field of view. The fitted model can be expanded into a grid 
+#' spatial representation with the function \code{apsfs::predict_grid}. The 
+#' vertical optical thickness for all simulations was 0.5, but dependence on 
+#' optical thickness is small. By construction, aerosol APSF have no pressure 
+#' dependence. The fitted Rayleigh simulations include pressure dependence with 
+#' limits of 1100 to 500 mbar. See \code{?apsfs::fit_annular_psf} for further 
+#' details.
+#'
+#' @source Generated with the apsfs library \url{https://github.com/AlexCast/apsfs}.
+
+"fasim"
+
+#' Annular simulations
+#'
+#' Contains the atmospheric point spread functions (APSFs) for nadir vieweing 
+#' sensors, simulated for the different standard aerosol models of the 6SV 
+#' radiative transfer code: maritime (mar), continental (con) and urban (urb). 
+#' Simulations were carried out without Rayleigh contribution, and with an 
+#' aerosol scale height of 2 km. The APSFs for Rayleigh alone (ray) are also 
+#' available at four pressure levels: 1100 mbar (p1100), 1013.25 mbar (p1013), 
+#' 750 mbar (p0750) and 500 mbar (p0500). Sensor was positioned at TOA, with 
+#' nadir view angle and infinitesimal field of view. The vertical optical 
+#' thickness for all aerosol simulations was 0.5, while for Rayleigh, was the
+#' Rayleigh optical thickness at the given surface atmospheric pressure at 450 
+#' nm. It is noted, however, that dependence os the normalized APSF on optical 
+#' thickness is small. By construction, aerosol APSF have no pressure 
+#' dependence. All simulations are for a sensor altitude of 800 km, but altitude
+#' dependence is only significant at altitudes lower than 10 km (aircraft, 
+#' drones).
+#'
+#' @format A list with the following components:
+#' \itemize{
+#'   \item{mar:}{ APSF simulation for the maritime aerosol type.}
+#'   \item{con:}{ APSF simulation for the continental aerosol type.}
+#'   \item{urb:}{ APSF simulation for the urban aerosol type.}
+#'   \item{ray:}{ A list with APSFs of Rayleigh scattering for different surface pressures.}
+#'   \itemize{
+#'     \item{p1100:}{ Rayleigh APSF simulation at 1100 mbar.}
+#'     \item{p1013:}{ Rayleigh APSF simulation at 1013.25 mbar.}
+#'     \item{p0750:}{ Rayleigh APSF simulation at 750 mbar.}
+#'     \item{p0500:}{ Rayleigh APSF simulation at 500 mbar.}
+#'   }
+#' }
+#'
+#' @source Generated with the apsfs library.
+
+"asim"
 

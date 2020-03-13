@@ -15,7 +15,8 @@ mc_psf(
   np,
   mnw,
   cdf_aer,
-  cdf_ray,
+  cdf_ray = NULL,
+  press = NULL,
   Rmc = FALSE
 )
 }
@@ -40,6 +41,9 @@ mc_psf(
 [0,1].}
 
 \item{cdf_aer}{Aerosol scattering CDF LUT (unitless).}
+
+\item{press}{Atmospheric pressure at surface (mbar). Can be omitted if 
+present on the attributes of atm. See Details.}
 
 \item{Rmc}{Logical. Should the R version of the MC code be used? Defaults
 to FALSE. See Details.}
@@ -67,7 +71,10 @@ not included). The surface is considered totally absorbing, such that
 multiple interaction between surface and atmosphere are not included.
 
 The atmosphere profile atm should be a named data frame as the one created by 
-function \code{get_opt_atm_prfl}.
+function \code{get_opt_atm_prfl}. If the profile is create manually or with 
+user functions, it must contain at least the same variables and column names.
+It may also include pressure in the attributes (attr(atm, "press") <- value),
+and in this case the parameter press can be omitted.
 
 The initial direction of the photon package is sampled assuming equal 
 sensibility of the sensor to all directions within its FOV. As an example, 
@@ -114,4 +121,27 @@ contribution can be made with function \code{an_psf}.
 An R version of the code is also provided. It is present mainly for 
 validation reasons but can be useful in a system without a compiler to
 compile the C code. It will run many times slower though.
+}
+\examples{
+# Using the C version of the code:
+data(us76)
+atm <- rayleigh_od(us76, lambda = 550) \%>\%
+       get_opt_atm_prfl(atm = us76, tau_aer = 0.5, H_aer = 2, w0_aer = 0.89, 
+         tau_ray_z = ., a_mol_z = rep(0, nrow(us76)))
+cdf_aer <- cdf_lut(continental_ph_6sv[, c(1, 8)])
+psf_int <- mc_psf(atm     = atm, 
+                  geom    = 'annular', 
+                  res     = 0.03, 
+                  ext     = 10, 
+                  snspos  = c(0, 0, 800), 
+                  snsfov  = 0, 
+                  snsznt  = 0, 
+                  np      = 1E5, 
+                  mnw     = 1E-6,
+                  cdf_aer = cdf_aer)
+par(mar = c(5, 6, 3, 2))
+x <- psf_int$bin_brks
+plot(x, cum_psf(psf_int), xaxs = "i",  yaxs = "i", xlab = "Radius (km)", 
+ylab = expression(2*pi*integral("r'"*f("r'")*d*"r'", 0, r)), xlim = c(0, 10))
+
 }

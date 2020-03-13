@@ -3,6 +3,8 @@
 \docType{data}
 \name{continental_ph_6sv}
 \alias{continental_ph_6sv}
+\alias{maritime_ph_6sv}
+\alias{urban_ph_6sv}
 \title{6SV Standard Aerosol Phase Functions}
 \format{A data frame with 83 rows and 21 variables, the first being the 
 angular reference (degrees) and the phase function in 20 wavelengths.}
@@ -11,6 +13,10 @@ angular reference (degrees) and the phase function in 20 wavelengths.}
 }
 \usage{
 continental_ph_6sv
+
+maritime_ph_6sv
+
+urban_ph_6sv
 }
 \description{
 A dataset containing the scattering phase functions of three standard 

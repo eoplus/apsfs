@@ -102,18 +102,19 @@ dpsf <- function(psfm, norm = TRUE) {
 #' The function calculates the (normalized) cumulative integral of the annular 
 #' PSF and fits the following model by optimization:
 #'
-#' F(r) = c1 - (c2 * e^(c3 * r) + c4 * e^(c5 * r) + c6 * e^(c7 * r)),
-#'
-#' c1 = x1,
-#' c2 = x2 / p,
-#' c3 = x3 / p,
-#' c4 = (c1 - c2) * x4,
-#' c5 = x5,
-#' c6 = (c1 - c2) * (1 - x4),
-#' c7 = x6,
-#' p  = press / 1013.25,
-#' and x1 to x5 are model parameters. Note that x1 = total diffuse transmittance
-#' (or 1, if norm = TRUE) and that c2 + c4 + c6 = c1.
+#' F(r) = c1' - (c2' * e^(c3' * r) + c4' * e^(c5' * r) + c6' * e^(c7' * r)),
+#' \describe{
+#'   \item{c1' =}{ c1,}
+#'   \item{c2' =}{ c2 / p,}
+#'   \item{c3' =}{ c3 / p,}
+#'   \item{c4' =}{ (c1' - c2') * c4,}
+#'   \item{c5' =}{ c5,}
+#'   \item{c6' =}{ (c1' - c2') * (1 - c4),}
+#'   \item{c7' =}{ c6,}
+#'   \item{p   =}{ press / 1013.25,}
+#' }
+#' and c1 to c6 are fitted parameters. Note that c1 = total diffuse transmittance
+#' (or 1, if norm = TRUE) and that c2' + c4' + c6' = c1.
 #'
 #' If there is no pressure dependency (e.g., aerosol only), 'press' does not 
 #' need to be specified. Internally, it will be set to 1013.25 mbar, p will 
@@ -136,35 +137,54 @@ dpsf <- function(psfm, norm = TRUE) {
 #'
 #' @return
 #' A list with the following components: 
-#' "type":         type of the fitted model; 
-#' "coefficients": named vector with the 6 coefficients;
-#' "mare":         the minimum mean absolute relative error of the model fit; 
-#' "mare_seq":     a sorted sequence of MARE of different random starts;
-#' "convergence":  convergence code from \code{optim};
-#' "press_dep":    logical flag indicating if there was pressure dependency; 
-#' "press_rng":    the range of pressure values if fitted with pressure 
-#'                 dependency.
-#' @examples
+#' \describe{
+#'   \item{type:}{Type of the fitted model;}
+#'   \item{coefficients:}{Named vector with the 6 coefficients;}
+#'   \item{mare:}{The minimum mean absolute relative error of the model fit;}
+#'   \item{mare_seq:}{A sorted sequence of MARE of different random starts;}
+#'   \item{convergence:}{Convergence code from \code{optim};}
+#'   \item{press_dep:}{Logical flag indicating if there was pressure dependency;}
+#'   \item{press_rng:}{The range of pressure values if fitted with pressure dependency.}
+#' }
 #'
-#' psfm <- list(
-#'  ray_res003_v00_p1100_annular,
-#'  ray_res003_v00_p1013_annular,
-#'  ray_res003_v00_p0750_annular,
-#'  ray_res003_v00_p0500_annular
-#' )
-#' press <- rep(c(1100, 1013.25, 750, 500), each = length(ray_res003_v00_p0500_annular$bin_mid))
-#' opt   <- fit_annular_psf(psfm, press = press, norm = TRUE, nstart = 30)
+#' @examples
+#' # Fitting continental aerosol annular APSF simulation:
+#'
+#' data(asim)
+#' psfm  <- asim["con"] # Note that input to function must be a list!
+#' opt   <- fit_annular(psfm, norm = TRUE, nstart = 30)
 #' opt
 #' plot(opt$mare_seq, xlab = "Iteration", ylab = "MARE")
 #'
+#' # Fitting Rayleigh annular APSF simulation with pressure dependence:
+#'
+#' data(asim)
+#' psfm  <- asim[["ray"]] # A list of Rayleigh simulations at different pressures 
+#' opt   <- fit_annular(psfm, press = TRUE, norm = TRUE, nstart = 30)
+#' opt
+#' par(mfcol = c(1, 2))
+#' plot(opt$mare_seq, xlab = "Iteration", ylab = "MARE")
+#' plot(NA, xlim = c(0, 10), ylim = c(0, 1), xaxs = "i", yaxs = "i", 
+#'   xlab = "Radius (km)", ylab = "Normalized f(r)")
+#' x <- asim[["ray"]][[1]]$bin_brks
+#' cols <- rev(rainbow(1:length(asim[["ray"]]), start = 0, end = 0.8))
+#' for(i in 1:length(asim[["ray"]])) {
+#'   points(x, cum_psf(asim[["ray"]][[i]], norm = TRUE), col = "grey")
+#' }
+#' for(i in 1:length(asim[["ray"]])) {
+#'   press <- asim[["ray"]][[i]]$metadata$press
+#'   lines(x, predict_annular(x, opt, type = "cumpsf", press = press))
+#' }
+#'
 #' @export
 
-fit_annular_psf <- function(psfm, press = NULL, norm = TRUE, nstart = 10) {
+fit_annular <- function(psfm, press = FALSE, norm = TRUE, nstart = 10) {
 
-  if(length(psfm) > 1 & any(!is.null(press))) norm <- TRUE
-  if(any(is.null(press)) & length(psfm) > 1)
-    stop("psfm length > 1 but press not specified.", call. = FALSE)
-
+  if(length(psfm) > 1 & press) norm <- TRUE
+  if(!press & length(psfm) > 1) {
+    "psfm length > 1 but press set to FALSE. Only first psf will be used" %>%
+    warning(call. = FALSE)
+  }
 
   if(norm) {
     for(i in 1:length(psfm)) {
@@ -172,12 +192,27 @@ fit_annular_psf <- function(psfm, press = NULL, norm = TRUE, nstart = 10) {
     }
   }
 
-  if(is.null(press)) {
+  if(press) {
+    # Check that all simulations are at the same except for pressure:
+    meta <- lapply(psfm, function(x) {x$metadata[c("res", "ext", "snsznt", "snsfov", "snspos")]})
+    for(i in 2:length(meta)) {
+      for(j in 1:4) {
+        if(!identical(meta[[1]][[j]], meta[[i]][[j]])) {
+          paste("All simulations included in a given fit with pressure dependence", 
+            "must have the same parameters: res, ext, snsznt, snsfov, snspos") %>%
+          stop(call. = FALSE)
+        }
+      }
+    }
+
+    n     <- length(psfm[[1]]$bin_mid)
+    press <- sapply(psfm, function(x) { x$metadata$press }) %>%
+             rep(each = n) %>%
+             `/`(., 1013.25)
+    pdep  <- TRUE
+  } else {
     press <- 1
     pdep  <- FALSE
-  } else {
-    press <- press / 1013.25
-    pdep  <- TRUE
   }
 
   # Build function to be optimized:
@@ -200,7 +235,7 @@ fit_annular_psf <- function(psfm, press = NULL, norm = TRUE, nstart = 10) {
   x    <- rep(psfm[[1]]$bin_brks[-1], length(psfm))
   y    <- NULL
   for(i in 1:length(psfm)) {
-    y <- c(y, cumsum(psfm[[i]][[1]]))
+    y <- c(y, cum_psf(psfm[[i]])[-1])
   }
   st   <- c(0.05, -0.14, 0.23, -0.32, -0.05)
   opt  <- optim(st, optfun, method = "Nelder-Mead", ftot = y, r = x, 
@@ -241,11 +276,11 @@ fit_annular_psf <- function(psfm, press = NULL, norm = TRUE, nstart = 10) {
 
 #' Predict annular PSF fitted model
 #'
-#' Solves a fitted model from \code{fit_annular_psf} for the PSF of the radial 
+#' Solves a fitted model from \code{fit_annular} for the PSF of the radial 
 #' cummulative PSF at requested radius.
 #'
 #' @param r     The radius distances (km) at which the model should be evaluated.
-#' @param fit   A model fit from \code{fit_annular_psf}.
+#' @param fit   A model fit from \code{fit_annular}.
 #' @param type  Type of prediction: 'psf', 'dpsf', or 'cumpsf'. See Details.
 #' @param press Pressure in mbar or NULL. See details.
 #'
