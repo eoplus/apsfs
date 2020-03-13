@@ -165,7 +165,7 @@ rayleigh_od <- function(atm, lambda, co2 = 400, lat = 45) {
  ma  <- 15.0556 * co2 + 28.9595
 
  # Mean refractive index of dry air (at 288.15 K and 101.325 Pa):
- na_450 <- rho::n_air(lambda)
+ na_450 <- n_air(lambda)
  na     <- 1 + (na_450 - 1) * (1 + 0.54 * (co2 - 0.00045))
 
  # Scattering cross-section of Reyleigh scattering:
@@ -189,6 +189,60 @@ rayleigh_od <- function(atm, lambda, co2 = 400, lat = 45) {
  tau_ray <- sigma * P * An / ma / g
 
  return(tau_ray)
+
+}
+
+
+#' Dispersion formula for the refractive index of air
+#'
+#' This function calculates the real part of the refractive index of standard 
+#' dry air relative to vaccum. See details.
+#'
+#' @param lambda Wavelength in vacuum (nm).
+#'
+#' @details The dispersion model implemented is that by Ciddor (1996), for the 
+#' refractive index of standard dry air. It is reference for dry air (0 
+#' moisture), 15 ºC, 101.325 Pa and 450 ppm CO2. This equation is recomended by 
+#' Zhang et al. (2009) for the convertion of (saline) water refractive index 
+#' relative to air to that relative to vacuum.
+#'
+#' Ciddor (1996) also provides equations to account for different levels of CO2 
+#' and water vapor. Those are not implemented in the current version.
+#'
+#' The valid range is 200 nm to 1100 nm. If the refractive index is requested 
+#' outside this range, the function will return a warning.
+#'
+#' @return A numeric vector with the real part of refractive index of standard 
+#' dry air (unitless).
+#'
+#' @references
+#' Ciddor, P. E. 1996. Refractive index of air: new equations for the visible 
+#' and near infrared. Applied Optics 35, 9, 1566-73. DOI: 10.1364/AO.35.001566
+#'
+#' Zhang, X.; Hu, L.; He, M.-X. 2009. Scattering by pure seawater: effect of 
+#' salinity. Optics Express 17, 7, 5698-710. DOI: 10.1364/OE.17.005698
+#'
+#' @examples
+#' # Get the refractive index for teh visible range: 
+#' n_air(400:700) 
+#'
+#' @export
+
+n_air <- function(lambda) {
+
+  if(any(lambda < 200) || any(lambda > 1100))
+    warning("Requested wavelength outside model domain: [200,1100]")
+
+  l2  <- (lambda * 1E-3)^-2  # Convert to wavlength in microns and square
+
+  k0  <- 5792105
+  k1  <- 238.0185
+  k2  <- 167917
+  k3  <- 57.362
+
+  n <- 1 + ((k0 / (k1 - l2) + k2 / (k3 - l2)) * 1E-8)
+
+  return(n)
 
 }
 

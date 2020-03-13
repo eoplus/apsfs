@@ -29,11 +29,10 @@ Please note follow the licence terms in using, modifiying and sharing this code.
 
 ### Install from Github:
 
-The package depends on packages magrittr and numDeriv and on the unpublished package rho.
+The package depends on packages magrittr and numDeriv.
 
 ```
 # install.packages(c("remotes", "magrittr", "numDeriv"))
-# remotes::install_github("AlexCast/rho")
 remotes::install_github("AlexCast/apsfs")
 ```
 
