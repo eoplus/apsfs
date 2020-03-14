@@ -15,7 +15,7 @@ Polarization, inelastic scattering and atmospheric turbulence are not included. 
 
 Simulations can be recorded in an annular geometry (unidimensional) for symmetric conditions (flat Lambertian surfaces and sensor looking at nadir). For asymmetric conditions (surface elevation, non-Lambertian BRDF and/or zenith view angles away from nadir) the sectorial (radius, azimuth) and grid (x, y) geometries are available.
 
-The results can then be fitted to models to provide flexibility for application. Cumulative annular data is fitted to a three term exponential function and can include pressure dependence. Cumulative sectorial data is fitted with bidimensional model with exponential term for radius and polynomial term for azimuth and can include view angle dependence. Grid data can be fitted with Zernike polynomials.
+The results can then be fitted to models to provide flexibility for application. Cumulative annular data is fitted to a three term exponential function and can include pressure dependence. Cumulative sectorial data is fitted with Singular Value Decomposition and can include third predictor (e.g., view angle dependence). Grid data can be fitted with Zernike polynomials. Those models can be solved to retrive the cumulative APSF, the area integral APSF or the (density) PSF (1/m<sup>2</sup>).
 
 A C compiler is necessary to access the C version of the Monte Carlo code. A (much slower) R version of the same code is also provided if a C compiler is not available.
 
