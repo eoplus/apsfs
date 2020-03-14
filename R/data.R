@@ -84,7 +84,7 @@
 #' vertical optical thickness for all simulations was 0.5, but dependence on 
 #' optical thickness is small. By construction, aerosol APSF have no pressure 
 #' dependence. The fitted Rayleigh simulations include pressure dependence with 
-#' limits of 1100 to 500 mbar. See \code{?apsfs::fit_annular_psf} for further 
+#' limits of 1100 to 500 mbar. See \code{?apsfs::fit_annular} for further 
 #' details.
 #'
 #' @source Generated with the apsfs library \url{https://github.com/AlexCast/apsfs}.
@@ -127,3 +127,45 @@
 
 "asim"
 
+#' Sectorial simulations
+#'
+#' Contains the atmospheric point spread functions (APSFs) for nadir, 30 and 60 
+#' degrees vieweing sensors, simulated for the continental (con) standard aerosol 
+#' model of the 6SV radiative transfer code. Simulations were carried out 
+#' without Rayleigh contribution, and with an aerosol scale height of 2 km.
+#' Sensor was positioned at TOA, with an infinitesimal field of view. The 
+#' vertical optical thickness for all aerosol simulations was 0.5. It is noted, 
+#' however, that dependence os the normalized APSF on optical thickness is small. 
+#' By construction, aerosol APSF have no pressure dependence. All simulations 
+#' are for a sensor altitude of 800 km, but altitude dependence is only 
+#' significant at altitudes lower than 10 km (aircraft, 
+#' drones).
+#'
+#' @format A list with the following components:
+#' \itemize{
+#'   \item{conv00:}{ APSF simulation for the continental aerosol type at 0 degree view angle;}
+#'   \item{conv30:}{ APSF simulation for the continental aerosol type at 30 degree view angle;}
+#'   \item{conv60:}{ APSF simulation for the Continental aerosol type at 60 degree view angle.}
+#' }
+#'
+#' @source Generated with the apsfs library.
+
+"ssim"
+
+#' Fitted sectorial simulations
+#'
+#' Contains the fitted coefficients of the atmospheric point spread functions
+#' (APSFs) simulated for the continental standard aerosol model of the 6SV 
+#' radiative transfer code. Simulations were carried out without Rayleigh 
+#' contribution, and with an aerosol scale height of 2 km. Sensor was positioned
+#' at TOA, with three view angles (0, 30 and 60 degrees) and  had an infinitesimal 
+#' field of view. The fitted model can be expanded into line, sectors or grid 
+#' spatial representation with the functions \code{apsfs::predict_annular}, 
+#' \code{apsfs::predict_sectorial} and \code{apsfs::predict_grid}. The vertical 
+#' optical thickness for all simulations was 0.5, but dependence on optical 
+#' thickness is small. By construction, aerosol APSF have no pressure 
+#' dependence. See \code{?apsfs::fit_sectorial} for further details.
+#'
+#' @source Generated with the apsfs library \url{https://github.com/AlexCast/apsfs}.
+
+"fasim"

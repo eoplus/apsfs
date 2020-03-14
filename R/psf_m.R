@@ -279,7 +279,7 @@ fit_annular <- function(psfm, press = FALSE, norm = TRUE, nstart = 10) {
 #' Solves a fitted model from \code{fit_annular} for the PSF of the radial 
 #' cummulative PSF at requested radius.
 #'
-#' @param r     The radius distances (km) at which the model should be evaluated.
+#' @param r     The radial distances (km) at which the model should be evaluated.
 #' @param fit   A model fit from \code{fit_annular}.
 #' @param type  Type of prediction: 'psf', 'dpsf', or 'cumpsf'. See Details.
 #' @param press Pressure in mbar or NULL. See details.

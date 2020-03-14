@@ -7,7 +7,7 @@
 predict_annular(r, fit, type = c("psf", "dpsf", "cumpsf"), press = NULL)
 }
 \arguments{
-\item{r}{The radius distances (km) at which the model should be evaluated.}
+\item{r}{The radial distances (km) at which the model should be evaluated.}
 
 \item{fit}{A model fit from \code{fit_annular}.}
 

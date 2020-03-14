@@ -209,7 +209,6 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
     ext     = ext, 
     np      = np, 
     mnw     = mnw,
-    aer     = ifelse(sum(ain))
   )
 
   class(psf) <- c("psf", class(psf))

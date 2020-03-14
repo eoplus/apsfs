@@ -62,8 +62,6 @@
 #' @name apsfs-package
 NULL
 
-
-
 is.psf  <- function(x) {
   inherits(x, "psf")
 }
