@@ -351,7 +351,8 @@ predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf"),
   dpsf <- .pred_annular_den(r = r, press = press, fit = fit)
   psf  <- pi * diff(r^2) * (dpsf[-1] + dpsf[-length(dpsf)]) / 2
   if(r[1] == 0)
-    psf[1] <- .pred_annular_den(r = r[2], press = press, fit = fit) * 2 * pi * r[2]
+#    psf[1] <- .pred_annular_den(r = r[2], press = press, fit = fit) * 2 * pi * r[2]
+    psf[1] <- .pred_annular_cum(r = r[2], press = press, fit = fit)
   psf
 }
 

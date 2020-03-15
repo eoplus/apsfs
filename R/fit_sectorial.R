@@ -66,8 +66,12 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
   
   pr_r <- poly(x1, pord, raw = T)
   pr_a <- poly(x2, pord, raw = T)
-  colnames(pr_r) <- colnames(pr_a) <- paste0("x", 1:pord)
-  lmr <- lma <- list()
+  # Add intercept as x^0
+  pr_r <- cbind(rep(1, nrow(pr_r)), pr_r)
+  pr_a <- cbind(rep(1, nrow(pr_a)), pr_a)
+  colnames(pr_r) <- colnames(pr_a) <- paste0("x", 0:pord)
+
+  lmr  <- lma <- list()
   form <- as.formula(paste0("z~0+", paste(colnames(pr_r), collapse = "+")))
 
   if(is.null(tpred)) {
@@ -82,11 +86,11 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
     for(i in 1:ncmp) {
       z   <- s$u[, i]
       val <- data.frame(pr_r, z = z)
-      lmr[[i]] <- lm(form, data = pr_r) %>%
+      lmr[[i]] <- lm(form, data = val) %>%
                   coefficients()
       z   <- s$v[, i]
       val <- data.frame(pr_a, z = z)
-      lma[[i]] <- lm(form, data = pr_a) %>%
+      lma[[i]] <- lm(form, data = val) %>%
                   coefficients()
     }
 
@@ -96,8 +100,8 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
       pord = pord,
       coefficients = list(
         scl  = diag(s$d[1:ncmp]),
-        lmr  = matrix(unlist(lmr), nrow = pord),
-        lma  = matrix(unlist(lma), nrow = pord)
+        lmr  = matrix(unlist(lmr), nrow = pord+1),
+        lma  = matrix(unlist(lma), nrow = pord+1)
       ),
       ext = psfl[[1]]$metadata$ext,
       tpred = NULL
@@ -106,6 +110,8 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
     est <- ((pr_r %*% fit$coefficients$lmr) %*% fit$coefficients$scl) %*% 
       t(pr_a %*% fit$coefficients$lma)
 
+    fit$rmse <- sqrt(mean((est - y)^2, na.rm = T))
+    y[y == 0] <- NA
     fit$mare <- mean(abs(est - y) / y, na.rm = T)
 
   } else {
@@ -149,6 +155,8 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
     id <- which(x3 == 0)
     if(length(id) > 0) x3[id] <- 1E-6
     pr_t <- poly(x3, pord, raw = T)
+    # Add intercept as x^0
+    pr_t <- cbind(rep(1, nrow(pr_t)), pr_t)
     colnames(pr_t) <- colnames(pr_r)
     lmt  <- list()
 
@@ -196,8 +204,8 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
         scl1 = diag(s1$d[1:ncmp]),
         scl2 = scl2,
         lma  = matrix(unlist(lma), nrow = pord),
-        lmr  = lapply(lmr, function(x) { matrix(unlist(x), nrow = pord) }),
-        lmt  = lapply(lmt, function(x) { matrix(unlist(x), nrow = pord) })
+        lmr  = lapply(lmr, function(x) { matrix(unlist(x), nrow = pord+1) }),
+        lmt  = lapply(lmt, function(x) { matrix(unlist(x), nrow = pord+1) })
       ),
       ext = psfl[[1]]$metadata$ext,
       tpred = tpred
@@ -218,6 +226,7 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
     }
     est <- (est %*% cf$scl1) %*% t(pr_a %*% cf$lma)
     fit$mare <- mean(abs(est - y) / y, na.rm = T)
+    fit$rmse <- sqrt(mean(est - y)^2)
 
   }
 
@@ -239,15 +248,15 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
 #'              evaluated.
 #'
 #' @details If type = cumpsf, the model fit to the cumulative PSF will be 
-#' evaluated at the desired positions. If type = psf, the (density) PSF is 
-#' returned (1/m2). If type == ipsf, quadrature is used to calculate the average 
-#' (density) PSF of the sector and the average is scaled by the area of the 
-#' sector. Note that in this case, r will be sorted and the returned values are 
-#' for the mid points of the input vector of positions, so will have a length of 
-#' length(r) - 1. Default is to return the PSF.
+#' evaluated at the desired positions. If type = dpsf, the density PSF is 
+#' returned (1/km2). If type == psf, quadrature is used to calculate the average 
+#' density PSF of the sector and the average is scaled by the area of the sector. 
+#' This should equal the Monte Carlo results.  Note that in this case, r will be 
+#' sorted and the returned values are for the mid points of the input vector of 
+#' positions, so will have a length of length(r) - 1. Default is to return the 
+#' PSF.
 #'
-#' @return A numeric vetor with the (density) PSF, PSF integrated over sector or 
-#' cumulative PSF.
+#' @return A matrix with the PSF, density PSF or cumulative PSF.
 #'
 #' @seealso \code{fit_sectorial}, \code{fit_annular}, \code{predict_annular}
 #'
@@ -256,7 +265,7 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
 #'
 #' @export
 
-predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "ipsf", "cumpsf"), 
+predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "dpsf", "cumpsf"), 
   tpred = NULL) {
 
   if(fit$type != "sectorial")
@@ -274,16 +283,23 @@ predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "ipsf", "cumpsf
   }
 
   fun <- switch(type[1],
-                "cumpsf" = .pred_sectorial_cum,
-                "dpsf"   = .pred_sectorial_den,
                 "psf"    = .pred_sectorial_psf,
+                "dpsf"   = .pred_sectorial_den,
+                "cumpsf" = .pred_sectorial_cum,
                 stop("type must be one of 'psf', 'dpsf', or 'cumpsf'", 
                   call. = FALSE)
          )
 
   if(type == "psf") r <- sort(r)
+
+  fun(r = r, a = a, tpred = tpred, fit = fit)
+}
+
+.pred_sectorial_cum <- function(r, a, tpred, fit) {
   pr_r <- poly(r, fit$pord, raw = T)
   pr_a <- poly(a, fit$pord, raw = T)
+  pr_r <- cbind(rep(1, nrow(pr_r)), pr_r)
+  pr_a <- cbind(rep(1, nrow(pr_a)), pr_a)
 
   if(!is.null(fit$tpred)) {
     # When fitting a third predictor with zero value, the zero is changed to 
@@ -294,10 +310,6 @@ predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "ipsf", "cumpsf
     pr_t <- NULL
   }
 
-  fun(pr_r = pr_r, pr_a = pr_a, pr_t, fit = fit, tpred = tpred)
-}
-
-.pred_sectorial_cum <- function(pr_r, pr_a, pr_t, tpred, fit) {
   cf  <- fit$coefficients
   if(is.null(tpred)) {
     est <- ((pr_r %*% cf$lmr) %*% cf$scl) %*% t(pr_a %*% cf$lma)
@@ -313,5 +325,21 @@ predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "ipsf", "cumpsf
   }
   est[is.na(est)] <- 0
   est
+}
+
+.pred_sectorial_den <- function(r, a, tpred, fit) {
+  .get_d2psf_dxdy(.pred_sectorial_cum, x1 = r, x2 = a, tpred = tpred, 
+    fit = fit) / r / (pi / 180)
+}
+
+.pred_sectorial_psf <- function(r, a, tpred, fit) {
+  dpsf <- .pred_sectorial_den(r = r, a = a, tpred = tpred, fit = fit)
+  dpsf <- (dpsf[-1,] + dpsf[-nrow(dpsf),]) 
+  dpsf <- (dpsf[,-1] + dpsf[,-ncol(dpsf)]) 
+  psf  <- (pi / 360) * diff(r^2) * dpsf / 4
+  if(r[1] == 0)
+    psf[1,] <- diff(.pred_sectorial_cum(r = r[2], a = a, tpred = tpred, 
+      fit = fit)[1, ])
+  psf
 }
 

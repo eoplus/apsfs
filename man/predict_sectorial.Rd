@@ -8,7 +8,7 @@ predict_sectorial(
   r,
   a = 0:360,
   fit,
-  type = c("psf", "ipsf", "cumpsf"),
+  type = c("psf", "dpsf", "cumpsf"),
   tpred = NULL
 )
 }
@@ -26,8 +26,7 @@ evaluated.}
 evaluated.}
 }
 \value{
-A numeric vetor with the (density) PSF, PSF integrated over sector or 
-cumulative PSF.
+A matrix with the PSF, density PSF or cumulative PSF.
 }
 \description{
 Solves a fitted model from \code{fit_sectorial} for the PSF of the radial and 
@@ -36,12 +35,13 @@ a third predictor variable.
 }
 \details{
 If type = cumpsf, the model fit to the cumulative PSF will be 
-evaluated at the desired positions. If type = psf, the (density) PSF is 
-returned (1/m2). If type == ipsf, quadrature is used to calculate the average 
-(density) PSF of the sector and the average is scaled by the area of the 
-sector. Note that in this case, r will be sorted and the returned values are 
-for the mid points of the input vector of positions, so will have a length of 
-length(r) - 1. Default is to return the PSF.
+evaluated at the desired positions. If type = dpsf, the density PSF is 
+returned (1/km2). If type == psf, quadrature is used to calculate the average 
+density PSF of the sector and the average is scaled by the area of the sector. 
+This should equal the Monte Carlo results.  Note that in this case, r will be 
+sorted and the returned values are for the mid points of the input vector of 
+positions, so will have a length of length(r) - 1. Default is to return the 
+PSF.
 }
 \examples{
 
