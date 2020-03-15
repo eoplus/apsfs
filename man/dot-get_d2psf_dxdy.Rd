@@ -2,17 +2,17 @@
 % Please edit documentation in R/derivative.R
 \name{.get_d2psf_dxdy}
 \alias{.get_d2psf_dxdy}
-\title{Calculates the mixed second partial derivative:  d^2 * z / dx * dy 
-for a scalar valued function (z) of two arguments (x, y). This is the 
-bidimensional density function, the underlying process integrated by Monte 
-Carlo, sub-sequentially used to calculate the bidimensional cumulative 
+\title{Calculates the mixed partial derivative:  d^2 * z / dx * dy for a scalar 
+valued function (z) of two arguments (x, y). This is the bidimensional 
+density function, the underlying process integrated by Monte Carlo, 
+sub-sequentially used to calculate the bidimensional cumulative 
 distribution function fitted by fit_sectorial or fit_grid.}
 \usage{
 .get_d2psf_dxdy(func, x1, x2, ...)
 }
 \description{
 The code is modified from numDeriv:::genD. The original function is generic 
-and vectorized in the sense of a vector valued function. It was adpated here 
+and vectorized in the sense of a vector valued function. It was adapted here 
 to solve a scalar valued function at several coordinates at the same time for 
 reasons of computational efficiency. The modifications below make this 
 function specific to the problem at hand, in particular the way the 

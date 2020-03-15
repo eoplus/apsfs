@@ -203,7 +203,7 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
       coefficients = list(
         scl1 = diag(s1$d[1:ncmp]),
         scl2 = scl2,
-        lma  = matrix(unlist(lma), nrow = pord),
+        lma  = matrix(unlist(lma), nrow = pord+1),
         lmr  = lapply(lmr, function(x) { matrix(unlist(x), nrow = pord+1) }),
         lmt  = lapply(lmt, function(x) { matrix(unlist(x), nrow = pord+1) })
       ),

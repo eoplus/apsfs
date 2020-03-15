@@ -252,6 +252,7 @@ fit_annular <- function(psfm, press = FALSE, norm = TRUE, nstart = 10) {
   }
 
   coef <- opt$par
+  est  <- optfun(coef, r = x, finf = max(y), error = F, press = press)
 
   fit <- list(
     type = "annular",
@@ -264,6 +265,7 @@ fit_annular <- function(psfm, press = FALSE, norm = TRUE, nstart = 10) {
       c6 = coef[5]
     ),
     mare = opt$value,
+    rmse = sqrt(mean((est - y)^2, na.rm = T)),
     mare_seq = sort(vals, decreasing = T),
     convergence = opt$convergence,
     press_dep = pdep,
@@ -351,7 +353,6 @@ predict_annular <- function(r, fit, type = c("psf", "dpsf", "cumpsf"),
   dpsf <- .pred_annular_den(r = r, press = press, fit = fit)
   psf  <- pi * diff(r^2) * (dpsf[-1] + dpsf[-length(dpsf)]) / 2
   if(r[1] == 0)
-#    psf[1] <- .pred_annular_den(r = r[2], press = press, fit = fit) * 2 * pi * r[2]
     psf[1] <- .pred_annular_cum(r = r[2], press = press, fit = fit)
   psf
 }
