@@ -40,4 +40,7 @@ dependence. All simulations are for a sensor altitude of 800 km, but altitude
 dependence is only significant at altitudes lower than 10 km (aircraft, 
 drones).
 }
+\details{
+Simulations run with the annular accumulator geometry.
+}
 \keyword{datasets}

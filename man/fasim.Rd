@@ -7,12 +7,8 @@
 \format{An object of class \code{list} of length 4.}
 \source{
 Generated with the apsfs library \url{https://github.com/AlexCast/apsfs}.
-
-Generated with the apsfs library \url{https://github.com/AlexCast/apsfs}.
 }
 \usage{
-fasim
-
 fasim
 }
 \description{
@@ -29,17 +25,5 @@ optical thickness is small. By construction, aerosol APSF have no pressure
 dependence. The fitted Rayleigh simulations include pressure dependence with 
 limits of 1100 to 500 mbar. See \code{?apsfs::fit_annular} for further 
 details.
-
-Contains the fitted coefficients of the atmospheric point spread functions
-(APSFs) simulated for the continental standard aerosol model of the 6SV 
-radiative transfer code. Simulations were carried out without Rayleigh 
-contribution, and with an aerosol scale height of 2 km. Sensor was positioned
-at TOA, with three view angles (0, 30 and 60 degrees) and  had an infinitesimal 
-field of view. The fitted model can be expanded into line, sectors or grid 
-spatial representation with the functions \code{apsfs::predict_annular}, 
-\code{apsfs::predict_sectorial} and \code{apsfs::predict_grid}. The vertical 
-optical thickness for all simulations was 0.5, but dependence on optical 
-thickness is small. By construction, aerosol APSF have no pressure 
-dependence. See \code{?apsfs::fit_sectorial} for further details.
 }
 \keyword{datasets}

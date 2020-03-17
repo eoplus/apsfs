@@ -208,7 +208,7 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
     res     = res, 
     ext     = ext, 
     np      = np, 
-    mnw     = mnw,
+    mnw     = mnw
   )
 
   class(psf) <- c("psf", class(psf))

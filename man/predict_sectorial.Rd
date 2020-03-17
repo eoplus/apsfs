@@ -6,9 +6,9 @@
 \usage{
 predict_sectorial(
   r,
-  a = 0:360,
+  a = NULL,
   fit,
-  type = c("psf", "dpsf", "cumpsf"),
+  type = c("psf", "dpsf", "cpsf"),
   tpred = NULL
 )
 }

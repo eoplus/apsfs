@@ -62,7 +62,7 @@
 fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) {
 
   x1  <- psfl[[1]]$bin_brks[-length(psfl[[1]]$bin_brks)]
-  x2  <- 0:360
+  x2  <- (0:360) * pi / 180
   
   pr_r <- poly(x1, pord, raw = T)
   pr_a <- poly(x2, pord, raw = T)
@@ -149,6 +149,11 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
       stop(call. = FALSE)
     }
 
+    if(ncmp > length(x3)) {
+      stop(paste("When tpred is defined, ncmp must be equal or lower than the",
+        "number of levels in the input tpred"), call. = FALSE)
+    }
+   
     # Substitute zero for a small number. Polynomials of 0 will be zero, causing
     # a prediction of 0 (e.g., all cells of a nadir view PSF would be zero...). 
     # The absolute zero is substituted here for a small number.
@@ -181,7 +186,7 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
       # one variable: radius or third predictor.
       tmp <- matrix(s1$u[, i], nrow = length(x1), ncol = length(psfl))
       s2  <- svd(tmp)
-      scl2[[i]] <- diag(s2$d) 
+      scl2[[i]] <- diag(s2$d[1:ncmp]) 
       lmr[[i]] <- lmt[[i]] <- list()
       for(j in 1:ncmp) {
         z   <- s2$u[, j]
@@ -208,7 +213,8 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
         lmt  = lapply(lmt, function(x) { matrix(unlist(x), nrow = pord+1) })
       ),
       ext = psfl[[1]]$metadata$ext,
-      tpred = tpred
+      tpred = tpred,
+      tpred_rng = range(x3)
     )
     for(i in 1:ncmp) {
       fit$coefficients$lmt[[i]] <- na.omit(fit$coefficients$lmt[[i]])
@@ -265,8 +271,10 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
 #'
 #' @export
 
-predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "dpsf", "cumpsf"), 
+predict_sectorial <- function(r, a = NULL, fit, type = c("psf", "dpsf", "cpsf"), 
   tpred = NULL) {
+
+  if(is.null(a)) a <- (0:360) * pi / 180
 
   if(fit$type != "sectorial")
     stop("fit must be of sectorial type", call. = FALSE)
@@ -283,10 +291,10 @@ predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "dpsf", "cumpsf
   }
 
   fun <- switch(type[1],
-                "psf"    = .pred_sectorial_psf,
-                "dpsf"   = .pred_sectorial_den,
-                "cumpsf" = .pred_sectorial_cum,
-                stop("type must be one of 'psf', 'dpsf', or 'cumpsf'", 
+                "psf"  = .pred_sectorial_psf,
+                "dpsf" = .pred_sectorial_den,
+                "cpsf" = .pred_sectorial_cum,
+                stop("type must be one of 'psf', 'dpsf', or 'cpsf'", 
                   call. = FALSE)
          )
 
@@ -322,6 +330,7 @@ predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "dpsf", "cumpsf
         cbind(est, .)
     }
     est <- (est %*% cf$scl1) %*% t(pr_a %*% cf$lma)
+    est <- est * fit$tpred_rng[2] / tpred 
   }
   est[is.na(est)] <- 0
   est
@@ -329,7 +338,7 @@ predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "dpsf", "cumpsf
 
 .pred_sectorial_den <- function(r, a, tpred, fit) {
   .get_d2psf_dxdy(.pred_sectorial_cum, x1 = r, x2 = a, tpred = tpred, 
-    fit = fit) / r / (pi / 180)
+    fit = fit) / r #/ (pi / 180)
 }
 
 .pred_sectorial_psf <- function(r, a, tpred, fit) {
@@ -342,4 +351,49 @@ predict_sectorial <- function(r, a = 0:360, fit, type = c("psf", "dpsf", "cumpsf
       fit = fit)[1, ])
   psf
 }
+
+# The functions above use matrix notation and require only the coordinates of x
+# and the coordinates of y. But that assumes a regular grid. To interpolate the 
+# polar grid into a cartesian grid, the radial distances and azimuthal positions
+# will not be a regular grid, therefore a vector notation function was written
+# below to receive the coordinates {x, y}. This function is called only by the 
+# auxiliary function ".sectorial_kernel" for the function "predict_grid".
+
+.pred_sectorial_cum_VEC <- function(r, a, tpred, fit) {
+  pr_r <- poly(r, fit$pord, raw = T)
+  pr_a <- poly(a, fit$pord, raw = T)
+  pr_r <- cbind(rep(1, nrow(pr_r)), pr_r)
+  pr_a <- cbind(rep(1, nrow(pr_a)), pr_a)
+
+  if(!is.null(fit$tpred)) {
+    # When fitting a third predictor with zero value, the zero is changed to 
+    # a small number defined as 1E-6.
+    if(tpred == 0) tpred <- 1E-6
+    pr_t <- poly(tpred, fit$pord, raw = T)
+  } else {
+    pr_t <- NULL
+  }
+
+  cf  <- fit$coefficients
+  if(is.null(tpred)) {
+    est <- numeric(length(r))
+    for(i in 1:fit$ncmp) {
+      est <- est + cf$scl[i,i]  * (pr_r %*% cf$lmr[, i, drop = F]) * 
+        (pr_a %*% cf$lma[, i, drop = F])
+    }
+  } else {
+    est <- numeric(length(r))
+    for(i in 1:fit$ncmp) {
+      for(j in 1:fit$ncmp) {
+        est <- est + cf$scl2[[j]][i,i] * (pr_r %*% cf$lmr[[j]][, i, drop = F]) * 
+          (pr_t %*% cf$lmt[[j]][, i, drop = F]) * cf$scl[i,i] * 
+          (pr_a %*% cf$lma[, i, drop = F])
+      }
+    }
+    est <- est * fit$tpred_rng[2] / tpred 
+  }
+  est[is.na(est)] <- 0
+  est
+}
+
 
