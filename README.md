@@ -1,4 +1,5 @@
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip) 
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+ 
 # apsfs
 
 ### Atmospheric Point Spread Function simulation
@@ -15,7 +16,7 @@ Polarization, inelastic scattering and atmospheric turbulence are not included. 
 
 Simulations can be recorded in an annular geometry (unidimensional) for symmetric conditions (flat Lambertian surfaces and sensor looking at nadir). For asymmetric conditions (surface elevation, non-Lambertian BRDF and/or zenith view angles away from nadir) the sectorial (radius, azimuth) and grid (x, y) geometries are available.
 
-The results can then be fitted to models to provide flexibility for application. Cumulative annular data is fitted to a three term exponential function and can include pressure dependence. Cumulative sectorial data is fitted with Singular Value Decomposition and can include third predictor (e.g., view angle dependence). Grid data can be fitted with Zernike polynomials. Those models can be solved to retrive the cumulative APSF, the area integral APSF or the (density) PSF (1/m<sup>2</sup>).
+The results can then be fitted to models to provide flexibility for application. Cumulative annular data is fitted to a three term exponential function and can include pressure dependence. Cumulative sectorial data is fitted with Singular Value Decomposition and can include third predictor (e.g., view angle dependence). Grid data can be fitted with Zernike polynomials (needs further development!). Those models can be solved to retrive the cumulative APSF, the area integral APSF or the (density) PSF (1/m<sup>2</sup>).
 
 A C compiler is necessary to access the C version of the Monte Carlo code. A (much slower) R version of the same code is also provided if a C compiler is not available.
 
