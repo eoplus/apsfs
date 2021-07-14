@@ -149,7 +149,7 @@ SEXP C_mc_psf(SEXP atm,
   dirtw = 0;
   if(geomi == 1) { // (1) annular
 
-    n_brks = (exti - resi) / resi + 3;
+    n_brks = floor((exti - resi) / resi) + 3;
     bin_phtw = (double*) calloc(n_brks - 1, sizeof(double));
     bin_brks = (double*) calloc(n_brks, sizeof(double));
     bin_brks[0] = 0;
@@ -165,7 +165,7 @@ SEXP C_mc_psf(SEXP atm,
     bin_accm = &accm_annular;
 
   } else if(geomi == 2) { // (2) "sectorial"
-    n_brks = (exti - resi) / resi + 3;
+    n_brks = floor((exti - resi) / resi) + 3;
     bin_phtw = (double*) calloc((n_brks - 1) * 360, sizeof(double));
     bin_brks = (double*) calloc(n_brks, sizeof(double));
     bin_brks[0] = 0;
@@ -182,7 +182,7 @@ SEXP C_mc_psf(SEXP atm,
 
   } else if(geomi == 3) { // (3) "grid"
 
-    n_brks   = floor(2 * ((exti - resi / 2) / resi + 2));
+    n_brks   = 2 * (floor((exti - resi) / resi) + 3);
     bin_phtw = (double*) calloc((n_brks - 1) * (n_brks - 1), sizeof(double));
     bin_brks = (double*) calloc(n_brks, sizeof(double));
     bin_brks[0] = -INFINITY;
