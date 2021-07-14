@@ -182,7 +182,7 @@ SEXP C_mc_psf(SEXP atm,
 
   } else if(geomi == 3) { // (3) "grid"
 
-    n_brks   = 2 * (floor((exti - resi) / resi) + 3);
+    n_brks   = 2 * (floor((exti - resi) / resi) + 2);
     bin_phtw = (double*) calloc((n_brks - 1) * (n_brks - 1), sizeof(double));
     bin_brks = (double*) calloc(n_brks, sizeof(double));
     bin_brks[0] = -INFINITY;
