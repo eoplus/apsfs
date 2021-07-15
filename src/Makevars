@@ -1,4 +1,4 @@
-GSL_CFLAGS = -I/usr/local/include
+GSL_CFLAGS = -I/usr/local/include -Ofast
 GSL_LIBS   = -L/usr/local/lib -lgsl
 
 # combine to standard arguments for R
