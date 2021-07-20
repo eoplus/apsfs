@@ -4,13 +4,15 @@
 \name{us76}
 \alias{us76}
 \title{US76 Standard Atmosphere}
-\format{A data frame with 603 rows and 4 variables:
+\format{
+A data frame with 603 rows and 4 variables:
 \describe{
   \item{Z}{Geometric height from surface (km)}
   \item{Temperature}{Temperature (degree K)}
   \item{Pressure}{Pressure (mbar)}
   \item{Density}{Air density (kg / m3)}
-}}
+}
+}
 \source{
 Generated with the Public Domain Aeronautical Software (PDAS) code 
 atmos76.f90 \url{http://www.pdas.com/atmosdownload.html}

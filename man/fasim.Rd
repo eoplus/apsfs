@@ -4,7 +4,9 @@
 \name{fasim}
 \alias{fasim}
 \title{Fitted annular simulations}
-\format{An object of class \code{list} of length 4.}
+\format{
+An object of class \code{list} of length 4.
+}
 \source{
 Generated with the apsfs library \url{https://github.com/AlexCast/apsfs}.
 }

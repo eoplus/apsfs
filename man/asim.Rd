@@ -4,7 +4,8 @@
 \name{asim}
 \alias{asim}
 \title{Annular simulations}
-\format{A list with the following components:
+\format{
+A list with the following components:
 \itemize{
   \item{mar:}{ APSF simulation for the maritime aerosol type.}
   \item{con:}{ APSF simulation for the continental aerosol type.}
@@ -16,7 +17,8 @@
     \item{p0750:}{ Rayleigh APSF simulation at 750 mbar.}
     \item{p0500:}{ Rayleigh APSF simulation at 500 mbar.}
   }
-}}
+}
+}
 \source{
 Generated with the apsfs library.
 }

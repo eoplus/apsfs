@@ -35,7 +35,7 @@ mc_psf(
 
 \item{snsznt}{Sensor view zenith angle (radians), [0,pi].}
 
-\item{np}{Number of photons to trace, [0,Inf).}
+\item{np}{Number of photons to trace, [0,2^64 - 1].}
 
 \item{mnw}{Minimal weight to keep tracing photon package (unitless), 
 [0,1].}

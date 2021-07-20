@@ -4,8 +4,10 @@
 \name{rayleigh_cdf}
 \alias{rayleigh_cdf}
 \title{Rayleigh Cumulative Distribution Function}
-\format{A data frame with 1000 rows and 2 variables, the first being the 
-angular reference (radians) and the second the CDF.}
+\format{
+A data frame with 1000 rows and 2 variables, the first being the 
+angular reference (radians) and the second the CDF.
+}
 \source{
 6SV code \url{http://6s.ltdri.org/}
 }

@@ -13,7 +13,7 @@
 #' @param geom    One of "annular", "sectorial" or "grid", see Details.
 #' @param res     Resolution (km), [0,10]. See Details.
 #' @param ext     Maximum spatial extent at geom resolution (km), see Details. 
-#' @param np      Number of photons to trace, [0,Inf).
+#' @param np      Number of photons to trace, [0,2^64 - 1].
 #' @param mnw     Minimal weight to keep tracing photon package (unitless), 
 #'                [0,1].
 #' @param press   Atmospheric pressure at surface (mbar). Can be omitted if 
@@ -163,8 +163,12 @@ mc_psf <- function(atm, geom, res, ext, snspos, snsfov, snsznt, np, mnw,
         call. = FALSE)
     }
 
+    if(np > (2^64 - 1)) {
+      warning("Maximum number of photons to simulate is 2^64 - 1 (18,446,744,073,709,551,615). np set to that limit.", call. = FALSE)
+      np <- (2^64 - 1)
+    }
     psf <- .Call("C_mc_psf", atm, geom, res, ext, snspos, snsfov, snsznt, 
-      as.integer(np), mnw, cdf_aer, cdf_ray)
+      np, mnw, cdf_aer, cdf_ray)
 
     names(psf) <- c("bin_phtw", "dirtw", "bin_brks", "bin_mid")
 

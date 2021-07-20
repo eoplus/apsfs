@@ -4,12 +4,14 @@
 \name{ssim}
 \alias{ssim}
 \title{Sectorial simulations}
-\format{A list with the following components:
+\format{
+A list with the following components:
 \itemize{
   \item{conv00:}{ APSF simulation for the continental aerosol type at 0 degree view angle;}
   \item{conv30:}{ APSF simulation for the continental aerosol type at 30 degree view angle;}
   \item{conv60:}{ APSF simulation for the continental aerosol type at 60 degree view angle.}
-}}
+}
+}
 \source{
 Generated with the apsfs library.
 }

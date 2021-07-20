@@ -6,13 +6,19 @@
 \alias{maritime_coef_6sv}
 \alias{urban_coef_6sv}
 \title{6SV Standard Aerosol Coefficients}
-\format{A data frame with 20 rows and 7 variables, the first being the 
+\format{
+A data frame with 20 rows and 7 variables, the first being the 
 wavelength reference (nm) and optical coefficients:
 \describe{
   \item{Nor_Ext_Co}{Normalized extinction coefficients}
   \item{Nor_Sca_Co}{Normalized scattering coefficients}
   ...
-}}
+}
+
+An object of class \code{data.frame} with 20 rows and 7 columns.
+
+An object of class \code{data.frame} with 20 rows and 7 columns.
+}
 \source{
 6SV code \url{http://6s.ltdri.org/}
 }

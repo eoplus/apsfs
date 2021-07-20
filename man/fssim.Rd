@@ -4,7 +4,9 @@
 \name{fssim}
 \alias{fssim}
 \title{Fitted sectorial simulations}
-\format{An object of class \code{list} of length 9.}
+\format{
+An object of class \code{list} of length 9.
+}
 \source{
 Generated with the apsfs library \url{https://github.com/AlexCast/apsfs}.
 }

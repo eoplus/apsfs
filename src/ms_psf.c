@@ -73,13 +73,15 @@ SEXP C_mc_psf(SEXP atm,
   R_xlen_t atm_n;
 
   // Variable declaration:
-  int    geomi, n_brks, i, sid, clid, n, n_aer, n_ray;
+  unsigned long long int n;
+  int    geomi, n_brks, i, sid, clid, n_aer, n_ray;
   double dirtw, exti, resi, sod, tau_tot, snshfov, phi_s, km_max, PI2, phi, psi;
   double sint, s, mnwi, ru, bs, b_rat;
   double snsposi[3], snscdir[3], cdir[3], sdir[2];
   double *bin_brks, *bin_phtw, *psia, *cdfa, *psir, *cdfr;
   void (*bin_accm)(struct str_phtpkg, double*, double*, size_t);
   struct str_phtpkg pht;
+  unsigned long long int NP;
 
   // Randon sampling variables:
   gsl_rng *random;
@@ -97,10 +99,11 @@ SEXP C_mc_psf(SEXP atm,
   geomi = Rf_asInteger(geom);
   resi  = Rf_asReal(res);
   exti  = Rf_asReal(ext);
+  mnwi  = Rf_asReal(mnw);
+  NP    = (unsigned long long int) Rf_asReal(np);
   snsposi[0] = REAL(snspos)[0];
   snsposi[1] = REAL(snspos)[1];
   snsposi[2] = REAL(snspos)[2];
-  mnwi = Rf_asReal(mnw);
 
   // Get atmospheric profile variables:
   km_in  = Rf_protect(VECTOR_ELT(atm, 0));
@@ -227,7 +230,7 @@ SEXP C_mc_psf(SEXP atm,
   snscdir[1] = sin(Rf_asReal(snsznt)) * sin(phi_s);
   snscdir[2] = cos(Rf_asReal(snsznt));
 
-  for(n = 0; n < Rf_asInteger(np); n++) {
+  for(n = 0; n < NP; n++) {
 
     // Find the layer that the sensor is in:
     clid = sid;
@@ -346,13 +349,13 @@ SEXP C_mc_psf(SEXP atm,
   }
 
   // Normalize the results:
-  dirtw /= (double) Rf_asInteger(np);
+  dirtw /= (double) NP;
 
   if(geomi == 1) {
 
     for(i = 0; i < n_brks - 1; i++) {
 
-      bin_phtw[i] /= (double) Rf_asInteger(np);
+      bin_phtw[i] /= (double) NP;
 
     }
 
@@ -362,7 +365,7 @@ SEXP C_mc_psf(SEXP atm,
 
     for(i = 0; i < ((n_brks - 1) * 360); i++) {
 
-      bin_phtw[i] /= (double) Rf_asInteger(np);
+      bin_phtw[i] /= (double) NP;
 
     }
 
@@ -372,7 +375,7 @@ SEXP C_mc_psf(SEXP atm,
 
     for(i = 0; i < ((n_brks - 1) * (n_brks - 1)); i++) {
 
-      bin_phtw[i] /= (double) Rf_asInteger(np);
+      bin_phtw[i] /= (double) NP;
 
     }
 
