@@ -43,10 +43,6 @@ sorted and the returned values are for the mid points of the input vector of
 positions, so will have a length of length(r) - 1. Default is to return the 
 PSF.
 }
-\examples{
-
-
-}
 \seealso{
 \code{fit_sectorial}, \code{fit_annular}, \code{predict_annular}
 }

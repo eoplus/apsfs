@@ -1,10 +1,11 @@
-#' \pkg{apsfs}: Atmospheric Point Spread Function Simulation
+#' \pkg{apsfs}: Atmospheric Point Spread Function and Spherical Albedo Function Simulation
 #'
 #' This package contains functions to calculate the atmopsheric point spread 
 #' function (PSF) for a given geometry and atmospheric composition and profile 
-#' and functions to fit this data to annular or grid models.
+#' and functions to fit this data to annular, sectorial, or grid models. It can 
+#' also calculate the spatially-resolved spherical albedo function (SAF). 
 #'
-#' The PSF is calculated with backward Monte Carlo with the following 
+#' The PSF and SAF are calculated with backward Monte Carlo with the following 
 #' simplifications: 
 #' \itemize{
 #'  \item Plane paralel geometry;
@@ -13,14 +14,15 @@
 #'  \item Molecular absorption not included.
 #' }
 #'
-#' Simulations can be recorded in a annular geometry for symmetric conditions 
-#' (Lambertian surfaces and sensor looking at nadir) or grid geometry for 
-#' asymmetric conditions (surface BRDF and or zenith view angles away from 
-#' nadir).
+#' Simulations can be recorded in a annular for symmetric conditions (Lambertian 
+#' surfaces and sensor looking at nadir), and sectorial geometry or grid 
+#' geometry for asymmetric conditions (surface BRDF and or zenith view angles 
+#' away from nadir).
 #'
 #' The results can then be fitted to models to provide flexibility for 
 #' application. Cumulative annular data is fitted to a two term exponential 
-#' function, while grid data is fitted with Zernike polynomials.
+#' function, the sectorial data is fitted to a SVD, while grid data is fitted 
+#' with Zernike polynomials.
 #'
 #' Below is the list of exported functions in this package:
 #' \itemize{
@@ -30,6 +32,8 @@
 #'  \item cos2sph: Directional cosines to polar angles
 #'  \item mc_psf: Solves the radiative transfer with the Monte Carlo method to 
 #'        simulate the PSF
+#'  \item mc_saf: Solves the radiative transfer with the Monte Carlo method to 
+#'        simulate the SAF
 #'  \item dpsf: Calculates the PSF density (per area, in m^2)
 #'  \item fit_radial_psf: Fit a cumulative annular model to radial PSF geometry
 #'  \item fit_grid_psf: Fit grid PSF geometry with Zernike polynomials
@@ -63,28 +67,48 @@
 NULL
 
 is.psf  <- function(x) {
-  inherits(x, "psf")
+    inherits(x, "psf")
 }
 
 print.psf <- function(x, digits = 3) {
-  dir <- x$dirtw 
-  dif <- sum(x$bin_phtw)
-  tot <- dir + dif
-  txt <- c(
-    " Atmospheric Point Spread Function\n",
-    paste0(),
-    paste0("Geometry: ", x$metadata$geom, "\n"),
-    paste0("Extent: ", round(x$metadata$ext, digits), " km\n"),
-    paste0("Resolution: ", round(x$metadata$res, digits), " km\n"),
-    paste0("Altitude: ", round(x$metadata$snspos[3], digits), " km\n"),
-    paste0("Pressure(0): ", round(x$metadata$press, digits), " mbar\n"),
-    paste0("View angle: ", round(x$metadata$snsznt * 180 / pi, digits), " degrees\n"),
-    paste0("FOV:  ", round(x$metadata$snsfov * 180 / pi, digits), " degrees\n"),
-    paste0("Tdir: ", round(dir, digits), " (", round(100 * dir / tot, digits = 1), " %)\n"),
-    paste0("Tdif: ", round(dif, digits), " (", round(100 * dif / tot, digits = 1), " %)\n"),
-    paste0("Ttot: ", round(tot, digits), " (", round(100 * tot / tot, digits = 0), " %)\n")
-  )
-  cat(txt)
+    dir <- x$dirtw 
+    dif <- sum(x$bin_phtw)
+    tot <- dir + dif
+    txt <- c(
+        " Atmospheric Point Spread Function\n",
+        paste0(),
+        paste0("Geometry: ", x$metadata$geom, "\n"),
+        paste0("Extent: ", round(x$metadata$ext, digits), " km\n"),
+        paste0("Resolution: ", round(x$metadata$res, digits), " km\n"),
+        paste0("Altitude: ", round(x$metadata$snspos[3], digits), " km\n"),
+        paste0("Pressure(0): ", round(x$metadata$press, digits), " mbar\n"),
+        paste0("View angle: ", round(x$metadata$snsznt * 180 / pi, digits), " degrees\n"),
+        paste0("FOV:  ", round(x$metadata$snsfov * 180 / pi, digits), " degrees\n"),
+        paste0("Tdir: ", round(dir, digits), " (", round(100 * dir / tot, digits = 1), " %)\n"),
+        paste0("Tdif: ", round(dif, digits), " (", round(100 * dif / tot, digits = 1), " %)\n"),
+        paste0("Ttot: ", round(tot, digits), " (", round(100 * tot / tot, digits = 0), " %)\n")
+    )
+    cat(txt)
 }
 
+is.saf  <- function(x) {
+    inherits(x, "saf")
+}
+
+print.saf <- function(x, digits = 3) {
+    dif <- sum(x$bin_phtw)
+    txt <- c(
+        " Atmospheric Spherical Albedo Function\n",
+        paste0(),
+        paste0("Geometry: ", x$metadata$geom, "\n"),
+        paste0("Extent: ", round(x$metadata$ext, digits), " km\n"),
+        paste0("Resolution: ", round(x$metadata$res, digits), " km\n"),
+        paste0("Altitude: ", round(x$metadata$snspos[3], digits), " km\n"),
+        paste0("Pressure(0): ", round(x$metadata$press, digits), " mbar\n"),
+        paste0("View angle: ", round(x$metadata$snsznt * 180 / pi, digits), " degrees\n"),
+        paste0("FOV:  ", round(x$metadata$snsfov * 180 / pi, digits), " degrees\n"),
+        paste0("Rdif: ", round(dif, digits), " (", round(100 * dif, digits = 1), " %)\n"),
+    )
+    cat(txt)
+}
 

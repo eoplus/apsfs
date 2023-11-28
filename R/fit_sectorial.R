@@ -266,9 +266,6 @@ fit_sectorial <- function(psfl, norm = TRUE, tpred = NULL, pord = 10, ncmp = 3) 
 #'
 #' @seealso \code{fit_sectorial}, \code{fit_annular}, \code{predict_annular}
 #'
-#' @examples
-#' 
-#'
 #' @export
 
 predict_sectorial <- function(r, a = NULL, fit, type = c("psf", "dpsf", "cpsf"), 

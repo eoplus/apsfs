@@ -32,6 +32,12 @@ Note that all arguments should be length = 1 for atm with multiple rows
 (expected). For atm with a single row (e.g., sea level), one of the arguments
 can have length > 1.
 }
+\examples{
+rayleigh_od(us62, lambda = 400, co2 = 400, lat = 45)
+rayleigh_od(data.frame(Z = 0, Pressure = 1013.25), lambda = 400:700, 
+            co2 = 400, lat = 45)
+
+}
 \references{
 Bodhaine, B.A.; Wood, N.B.; Dutton, E.G.; Slusser, J.R. 1999. On Rayleigh 
 optical depth calculations. Journal of Atmospheric and Oceanic Technology 16, 

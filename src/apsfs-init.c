@@ -7,4 +7,5 @@
 
 void R_init_apsfs(DllInfo *info) {
   R_RegisterCCallable("apsfs", "C_mc_psf", (DL_FUNC) &C_mc_psf);
+  R_RegisterCCallable("apsfs", "C_mc_saf", (DL_FUNC) &C_mc_saf);
 }

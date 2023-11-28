@@ -1,8 +1,8 @@
 Package: apsfs
-Title: Monte Carlo code for simulation of atmospheric Point Spread Functions
+Title: Monte Carlo code for simulation of atmospheric Point Spread Functions and spatially-resolved Spherical Albedo Functions
 Version: 0.0.0.9000
-Authors@R: person("Alexandre", "Castagna", email = "alexandre.castagna@ugent.be", role = c("aut", "cre"))
-Description: An R package implementing backward Monte Carlo radiative transfer to calculate the atmospheric Point Spread Function.
+Authors@R: person("Alexandre", "Castagna", email = "alexandre.castagna@eoplus.science", role = c("aut", "cre"))
+Description: An R package implementing backward Monte Carlo radiative transfer to calculate the atmospheric Point Spread Function and the spatially-resolved Spherical Albedo Function.
 Depends: R (>= 3.3.3)
 License: file LICENSE
 Encoding: UTF-8
@@ -14,4 +14,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3

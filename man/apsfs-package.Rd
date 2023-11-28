@@ -3,14 +3,15 @@
 \docType{package}
 \name{apsfs-package}
 \alias{apsfs-package}
-\title{\pkg{apsfs}: Atmospheric Point Spread Function Simulation}
+\title{\pkg{apsfs}: Atmospheric Point Spread Function and Spherical Albedo Function Simulation}
 \description{
 This package contains functions to calculate the atmopsheric point spread 
 function (PSF) for a given geometry and atmospheric composition and profile 
-and functions to fit this data to annular or grid models.
+and functions to fit this data to annular, sectorial, or grid models. It can 
+also calculate the spatially-resolved spherical albedo function (SAF).
 }
 \details{
-The PSF is calculated with backward Monte Carlo with the following 
+The PSF and SAF are calculated with backward Monte Carlo with the following 
 simplifications: 
 \itemize{
  \item Plane paralel geometry;
@@ -19,14 +20,15 @@ simplifications:
  \item Molecular absorption not included.
 }
 
-Simulations can be recorded in a annular geometry for symmetric conditions 
-(Lambertian surfaces and sensor looking at nadir) or grid geometry for 
-asymmetric conditions (surface BRDF and or zenith view angles away from 
-nadir).
+Simulations can be recorded in a annular for symmetric conditions (Lambertian 
+surfaces and sensor looking at nadir), and sectorial geometry or grid 
+geometry for asymmetric conditions (surface BRDF and or zenith view angles 
+away from nadir).
 
 The results can then be fitted to models to provide flexibility for 
 application. Cumulative annular data is fitted to a two term exponential 
-function, while grid data is fitted with Zernike polynomials.
+function, the sectorial data is fitted to a SVD, while grid data is fitted 
+with Zernike polynomials.
 
 Below is the list of exported functions in this package:
 \itemize{
@@ -36,6 +38,8 @@ Below is the list of exported functions in this package:
  \item cos2sph: Directional cosines to polar angles
  \item mc_psf: Solves the radiative transfer with the Monte Carlo method to 
        simulate the PSF
+ \item mc_saf: Solves the radiative transfer with the Monte Carlo method to 
+       simulate the SAF
  \item dpsf: Calculates the PSF density (per area, in m^2)
  \item fit_radial_psf: Fit a cumulative annular model to radial PSF geometry
  \item fit_grid_psf: Fit grid PSF geometry with Zernike polynomials

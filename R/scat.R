@@ -145,7 +145,7 @@ scat_ray <- function(ru) {
 #' optical depth calculations. Journal of Atmospheric and Oceanic Technology 16, 
 #' 11, 1854-1861. DOI: 10.1175/1520-0426(1999)016<1854:ORODC>2.0.CO;2
 #'
-#' @example
+#' @examples
 #' rayleigh_od(us62, lambda = 400, co2 = 400, lat = 45)
 #' rayleigh_od(data.frame(Z = 0, Pressure = 1013.25), lambda = 400:700, 
 #'             co2 = 400, lat = 45)

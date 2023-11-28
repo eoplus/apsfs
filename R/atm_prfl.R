@@ -17,11 +17,11 @@
 
 get_mol_par <- function(atm, lambda) {
 
-  # Molecular absorption not implemented; for now:
-  a_mol_z  <- rep(0, nrow(atm))
-  tau_mol  <- 0 
+    # Molecular absorption not implemented; for now:
+    a_mol_z  <- rep(0, nrow(atm))
+    tau_mol  <- 0 
 
-  return(list(a_mol_z = a_mol_z, tau_mol = tau_mol))
+    return(list(a_mol_z = a_mol_z, tau_mol = tau_mol))
 }
 
 #' Get optical properties of atmospheric layers
@@ -71,78 +71,85 @@ get_mol_par <- function(atm, lambda) {
 #'
 #' @export
 
-get_opt_atm_prfl <- function(atm, tau_aer, H_aer, w0_aer, tau_ray_z, a_mol_z, 
-  nlayers = 1000) {
+get_opt_atm_prfl <- function(
+    atm, 
+    tau_aer, 
+    H_aer, 
+    w0_aer, 
+    tau_ray_z, 
+    a_mol_z, 
+    nlayers = 1000) {
  
-  z     <- sort(atm$Z, decreasing = TRUE)
-  brk_z <- rev(c(0, 10^seq(log10(0.01), log10(z[2]), length.out = nlayers - 1), 
-    z[1]))
-  brk_z[2] <- z[2] # Avoid rounding errors... 
+    z     <- sort(atm$Z, decreasing = TRUE)
+    brk_z <- rev(c(0, 10^seq(log10(0.01), log10(z[2]), length.out = nlayers - 1), 
+             z[1]))
+    brk_z[2] <- z[2] # Avoid rounding errors... 
 
-  # Integrate aerosol extinction from TOA to surface:
-  c_aer_0 <- tau_aer / H_aer
+    # Integrate aerosol extinction from TOA to surface:
+    c_aer_0 <- tau_aer / H_aer
 
-  tau_aer_fun <- function(x) {
-    c_aer_0 * exp(-x / H_aer)
-  }
-
-  tau_aer_z <- numeric(length(brk_z))
-
-  for(i in 1:length(brk_z)) {
-    tau_aer_z[i] <- integrate(tau_aer_fun, lower = brk_z[i], upper = Inf)$value
-  }
-
-  tau_aer_z[length(tau_aer_z)] <- tau_aer
-
-  # Get average aerosol properties in each layer:
-  c_aer_z <- diff(tau_aer_z) / abs(diff(brk_z))
-  b_aer_z <- c_aer_z * w0_aer
-  a_aer_z <- c_aer_z * (1 - w0_aer)
-
-  # Interpolate Rayleigh optical depth:
-  if(all(tau_ray_z == 0)) {
-    tau_ray_z <- rep(0, length(brk_z))
-  } else {
-    tau_ray_z <- 10^approx(x = atm$Z, y = log10(tau_ray_z), xout = brk_z)$y
-  }
-
-  # Get average Rayleigh properties in each layer:
-  b_ray_z <- diff(tau_ray_z) / abs(diff(brk_z))
-
-  # Integrate molecular absorption from TOA to surface:
-  tau_mol_z <- numeric(length(brk_z))
-
-  if(sum(a_mol_z) != 0) {
-    tau_mol_fun <- function(x) {
-      10^approx(x = us62$Z, y = log10(a_mol_z), xout = x)$y
+    tau_aer_fun <- function(x) {
+        c_aer_0 * exp(-x / H_aer)
     }
 
-    for(i in 2:length(brk_z)) {
-      xout <- seq(brk_z[i], max(brk_z), length.out = (max(brk_z) - brk_z[i]))
-      tp   <- tau_mol_fun(xout)
-      tau_mol_z[i] <- sum(diff(xout) * (tp[-1] + tp[-length(tp)]) / 2)
+    tau_aer_z <- numeric(length(brk_z))
+
+    for(i in 1:length(brk_z)) {
+        tau_aer_z[i] <- integrate(tau_aer_fun, lower = brk_z[i], upper = Inf)$value
     }
 
-  }
+    tau_aer_z[length(tau_aer_z)] <- tau_aer
 
-  # Get average molecular absorption properties in each layer:
-  a_mol_z  <- diff(tau_mol_z) / abs(diff(brk_z))
+    # Get average aerosol properties in each layer:
+    c_aer_z <- diff(tau_aer_z) / abs(diff(brk_z))
+    b_aer_z <- c_aer_z * w0_aer
+    a_aer_z <- c_aer_z * (1 - w0_aer)
 
-  # Get total attenuation and total single scattering albedo per layer:
-  c_atm_z  <- diff(tau_ray_z + tau_aer_z + tau_mol_z) / abs(diff(brk_z))
-  w0_atm_z <- diff(tau_ray_z + tau_aer_z * w0_aer) / abs(diff(brk_z)) / c_atm_z
+    # Interpolate Rayleigh optical depth:
+    if(all(tau_ray_z == 0)) {
+        tau_ray_z <- rep(0, length(brk_z))
+    } else {
+        tau_ray_z <- 10^approx(x = atm$Z, y = log10(tau_ray_z), xout = brk_z)$y
+    }
 
-  # Get total tau from TOA to surface:
-  tau_atm_prfl <- tau_ray_z + tau_aer_z + tau_mol_z
+    # Get average Rayleigh properties in each layer:
+    b_ray_z <- diff(tau_ray_z) / abs(diff(brk_z))
+
+    # Integrate molecular absorption from TOA to surface:
+    tau_mol_z <- numeric(length(brk_z))
+
+    if(sum(a_mol_z) != 0) {
+        tau_mol_fun <- function(x) {
+            10^approx(x = us62$Z, y = log10(a_mol_z), xout = x)$y
+        }
+
+        for(i in 2:length(brk_z)) {
+            xout <- seq(brk_z[i], max(brk_z), length.out = (max(brk_z) - brk_z[i]))
+            tp   <- tau_mol_fun(xout)
+            tau_mol_z[i] <- sum(diff(xout) * (tp[-1] + tp[-length(tp)]) / 2)
+        }
+    }
+
+    # Get average molecular absorption properties in each layer:
+    a_mol_z  <- diff(tau_mol_z) / abs(diff(brk_z))
+
+    # Get total attenuation and total single scattering albedo per layer:
+    c_atm_z  <- diff(tau_ray_z + tau_aer_z + tau_mol_z) / abs(diff(brk_z))
+    w0_atm_z <- diff(tau_ray_z + tau_aer_z * w0_aer) / abs(diff(brk_z)) / c_atm_z
+
+    # Get total tau from TOA to surface:
+    tau_atm_prfl <- tau_ray_z + tau_aer_z + tau_mol_z
   
-  tau_atm_prfl <- data.frame(km     = brk_z,                                    # Metric distance break points
-                             tau    = tau_atm_prfl,                             # Optical distance break points
-                             w0_tot = c(w0_atm_z, NA),                          # average single scattering albedo of the layer
-                             b_ray  = c(b_ray_z, NA),                           # average Rayleigh scattering coefficient of the layer
-                             b_aer  = c(b_aer_z, NA),                           # average Aerosol scattering coefficient of the layer
-                             c_tot  = c(c_atm_z, NA))                           # average total attenuation coefficient of the layer
-
-  attr(tau_atm_prfl, "press") <- max(atm$Pressure)
-  tau_atm_prfl
+    tau_atm_prfl <- data.frame(
+        km     = brk_z,                                    # Metric distance break points
+        tau    = tau_atm_prfl,                             # Optical distance break points
+        w0_tot = c(w0_atm_z, NA),                          # average single scattering albedo of the layer
+        b_ray  = c(b_ray_z, NA),                           # average Rayleigh scattering coefficient of the layer
+        b_aer  = c(b_aer_z, NA),                           # average Aerosol scattering coefficient of the layer
+        c_tot  = c(c_atm_z, NA)                            # average total attenuation coefficient of the layer
+    )
+    
+    attr(tau_atm_prfl, "press") <- max(atm$Pressure)
+    tau_atm_prfl
 }
 
