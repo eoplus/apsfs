@@ -2,13 +2,13 @@
 % Please edit documentation in R/predict_grid.R
 \name{predict_grid}
 \alias{predict_grid}
-\title{Predict PSF grid from fitted model}
+\title{Predict SAF or PSF grid from fitted model}
 \usage{
 predict_grid(
   f_aer,
   f_ray,
-  tray,
-  taer,
+  wray,
+  waer,
   ext = 0,
   res = 0.03,
   press = NULL,
@@ -17,11 +17,11 @@ predict_grid(
 )
 }
 \arguments{
-\item{f_aer}{Grid or annular fit to Rayleigh PSF}
+\item{f_aer}{Grid or annular fit to Rayleigh SAF or PSF}
 
-\item{tray}{Transmittance due to Rayleigh}
+\item{wray}{Weight (transmittance or reflectance) due to Rayleigh}
 
-\item{taer}{Transmittance due to aerosols}
+\item{waer}{Weight (transmittance or reflectance) due to aerosols}
 
 \item{ext}{Maximum spatial extent at geom resolution (km).}
 
@@ -34,5 +34,11 @@ predict_grid(
 \item{vaz}{Viewing azimuth (rad). For sectorial geometry only.}
 }
 \description{
-Predicts a PSF grid from annular or grid fitted models.
+Predicts a SAF or PSF grid from annular or grid fitted models.
+}
+\details{
+The grid for each scatter type are calculated individually, then their 
+weighted average is calculated based on the weights for Rayleigh and aerosol.
+The weights are given by the spherical albedo (for SAF) and diffuse upward 
+transmittance (for PSF).
 }

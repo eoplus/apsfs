@@ -19,38 +19,44 @@ rotate_grid <- function(psf, vaz) {
   raster::as.matrix(res)
 }
 
-#' Predict PSF grid from fitted model
+#' Predict SAF or PSF grid from fitted model
 #'
-#' Predicts a PSF grid from annular or grid fitted models.
+#' Predicts a SAF or PSF grid from annular or grid fitted models.
 #'
-#' @param f_aer Grid or annular fit to aerosol PSF
-#' @param f_aer Grid or annular fit to Rayleigh PSF
-#' @param tray  Transmittance due to Rayleigh
-#' @param taer  Transmittance due to aerosols
+#' @param f_aer Grid or annular fit to aerosol SAF or PSF
+#' @param f_aer Grid or annular fit to Rayleigh SAF or PSF
+#' @param wray  Weight (transmittance or reflectance) due to Rayleigh
+#' @param waer  Weight (transmittance or reflectance) due to aerosols
 #' @param ext   Maximum spatial extent at geom resolution (km).
 #' @param res   Resolution (km), [0,10].
 #' @param press Pressure in mbar or NULL. For annular fits only.
 #' @param tpred Third predictor level or NULL. For sectorial fits only.
 #' @param vaz   Viewing azimuth (rad). For sectorial geometry only.
 #'
+#' @details
+#' The grid for each scatter type are calculated individually, then their 
+#' weighted average is calculated based on the weights for Rayleigh and aerosol.
+#' The weights are given by the spherical albedo (for SAF) and diffuse upward 
+#' transmittance (for PSF).
+#'
 #' @export
 
-predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0, 
+predict_grid <- function(f_aer, f_ray, wray, waer, ext = 0, 
   res = 0.03, press = NULL, tpred = NULL, vaz = pi/2) {
 
   if(f_aer$type == f_ray$type & f_aer$type == "annular") {
     if(!is.null(tpred))
       stop("'tpred' must be NULL with annular fitted models", call. = FALSE)
-    .annular_kernel(f_aer, f_ray, tray, taer, ext, res, press)
+    .annular_kernel(f_aer, f_ray, wray, waer, ext, res, press)
   } else if(f_aer$type == f_ray$type & f_aer$type == "sectorial"){
     if(vaz < 0 | vaz > 2*pi)
       stop("'vaz' must be between 0 and 2*pi", call. = FALSE)
-    .sectorial_kernel(f_aer, f_ray, tray, taer, ext, res, tpred, vaz = vaz)
+    .sectorial_kernel(f_aer, f_ray, wray, waer, ext, res, tpred, vaz = vaz)
   }
 
 }
 
-.annular_kernel <- function(f_aer, f_ray, tray, taer, ext = 0, res = 0.03, 
+.annular_kernel <- function(f_aer, f_ray, wray, waer, ext = 0, res = 0.03, 
   press = NULL) {
 
   if(ext < (res + res / 2))
@@ -61,7 +67,7 @@ predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0,
   fun_grad <- function(r, press) {
     fa <- predict_annular(r, f_aer, "cpsf", press)
     fr <- predict_annular(r, f_ray, "cpsf", press)
-    ft <- (tray * fr + taer * fa) / (tray + taer)
+    ft <- (wray * fr + waer * fa) / (wray + waer)
     ft[which(is.na(ft))] <- 0
     return(ft)
   }
@@ -102,7 +108,7 @@ predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0,
   return(wm)
 }
 
-.sectorial_kernel <- function(f_aer, f_ray, tray, taer, ext = 0, res = 0.03, 
+.sectorial_kernel <- function(f_aer, f_ray, wray, waer, ext = 0, res = 0.03, 
   tpred = NULL, vaz = pi/2) {
 
   if(ext < (res + res / 2))
@@ -113,7 +119,7 @@ predict_grid <- function(f_aer, f_ray, tray, taer, ext = 0,
   fun_grad <- function(r, a, tpred) {
     fa <- .pred_sectorial_cum_VEC(r, a, tpred, fit = f_aer)
     fr <- .pred_sectorial_cum_VEC(r, a, tpred, fit = f_ray)
-    ft <- (tray * fr + taer * fa) / (tray + taer)
+    ft <- (wray * fr + waer * fa) / (wray + waer)
     ft[which(is.na(ft))] <- 0
     return(ft)
   }
